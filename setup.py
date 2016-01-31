@@ -19,5 +19,6 @@ setup(
     version="0.1.0",
     packages=find_packages(exclude=["contrib", "docs", "tests*", "tasks", "venv"]),
     install_requires=requires,
+    scripts=['bin/didata'],
     setup_requires=[],
 )
