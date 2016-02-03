@@ -100,28 +100,37 @@ def backup(config):
     pass
 
 @backup.command()
-@click.option('--serverId', required=True, help='The server ID to enable backups on')
+@click.option('--serverId', help='The server ID to enable backups on')
 @click.option('--servicePlan', help='The type of service plan to enroll in', type=click.Choice(['Enterprise', 'Essentials', 'Advanced']))
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def enable(client, serverid, serviceplan):
+def enable(client, serverid, serviceplan, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         dd_http_success(client.enable_backups_for_server(serverid))
     except HTTPError as e:
         dd_http_error(e)
 
 @backup.command()
-@click.option('--serverId', required=True, help='The server ID to disable backups on')
+@click.option('--serverId', help='The server ID to disable backups on')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def disable(client, serverid):
+def disable(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         dd_http_success(client.disable_backups_for_server(serverid))
     except HTTPError as e:
         dd_http_error(e)
 
 @backup.command()
-@click.option('--serverId', required=True, help='The server ID to disable backups on')
+@click.option('--serverId', help='The server ID to disable backups on')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def info(client, serverid):
+def info(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         response = client.get_backup_info_for_server(serverid)
         new_dict = flattenDict(response)
@@ -131,9 +140,12 @@ def info(client, serverid):
         dd_http_error(e)
 
 @backup.command(help='This will list the backup client types availabe for a given server i.e. FA.Linux/MySQL')
-@click.option('--serverId', required=True, help='The server ID to list client types for')
+@click.option('--serverId', help='The server ID to list client types for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def list_client_types(client, serverid):
+def list_client_types(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         client_types = client.get_backup_client_types_for_server(serverid)
         click.secho("Available backup client types for {}: ".format(serverid))
@@ -143,9 +155,12 @@ def list_client_types(client, serverid):
         dd_http_error(e)
 
 @backup.command(help='This will list the storage policies availabe for a given server i.e. 7 Years')
-@click.option('--serverId', required=True, help='The server ID to list storage policies for')
+@click.option('--serverId', help='The server ID to list storage policies for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def list_storage_policies(client, serverid):
+def list_storage_policies(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         storage_policies = client.get_backup_storage_policies_for_server(serverid)
         click.secho("Available storage policies for {}: ".format(serverid))
@@ -155,9 +170,12 @@ def list_storage_policies(client, serverid):
         dd_http_error(e)
 
 @backup.command(help='This will list the backup storage schedules for a given server i.e. 12 AM - 6 AM')
-@click.option('--serverId', required=True, help='The server ID to list backup schedules for')
+@click.option('--serverId', help='The server ID to list backup schedules for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def list_schedule_policies(client, serverid):
+def list_schedule_policies(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         schedule_policies = client.get_backup_schedule_policies_for_server(serverid)
         click.secho("Available backup client types for {}: ".format(serverid))
@@ -167,24 +185,30 @@ def list_schedule_policies(client, serverid):
         dd_http_error(e)
 
 @backup.command(help='Adds a backup client')
-@click.option('--serverId', required=True, help='The server ID to list backup schedules for')
+@click.option('--serverId', help='The server ID to list backup schedules for')
 @click.option('--clientType', required=True, help='The server ID to list backup schedules for')
 @click.option('--storagePolicy', required=True, help='The server ID to list backup schedules for')
 @click.option('--schedulePolicy', required=True, help='The server ID to list backup schedules for')
 @click.option('--triggerOn', help='The server ID to list backup schedules for')
 @click.option('--notifyEmail', help='The server ID to list backup schedules for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail):
+def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         dd_http_success(client.add_backup_policy_for_server(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail))
     except HTTPError as e:
         dd_http_error(e)
 
 @backup.command(help='Removes a backup client')
-@click.option('--serverId', required=True, help='The server ID to list backup schedules for')
+@click.option('--serverId', help='The server ID to list backup schedules for')
 @click.option('--policy', required=True, help='The server ID to list backup schedules for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
-def remove_client(client, serverid, policy):
+def remove_client(client, serverid, policy, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         dd_http_success(client.remove_backup_policy_for_server(serverid, policy))
     except HTTPError as e:
@@ -207,6 +231,10 @@ def download_url(client, serverid, serverfilteripv6):
 
 def get_single_server_id_from_filters(client, **kwargs):
     try:
+        # fix this line
+        if len(kwargs.keys()) == 0 or not kwargs['ipv6']:
+            click.secho("No serverId or filters for servers found")
+            exit(1)
         return client.get_single_server_id(**kwargs)
     except SingleServerReturnFailMultileServers as e:
         click.secho("FAILURE: Multiple Servers found in filter", fg='red', bold=True)
