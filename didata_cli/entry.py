@@ -36,6 +36,22 @@ def server(client):
     pass
 
 @server.command()
+@click.option('--name', required=True, help="The name of the server")
+@click.option('--description', required=True, help="The description of the server")
+@click.option('--imageId', required=True, help="The image id for the server")
+@click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
+@click.option('--administratorPassword', required=True, help="The administrator password")
+@click.option('--networkDomainId', required=True, help="The network domain Id to deploy on")
+@click.option('--vlanId', required=True, help="The vlan Id to deploy on")
+@pass_client
+def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
+    try:
+        dd_http_success(client.deploy_server(name, description, imageid, autostart, administratorpassword, None, networkdomainid, vlanid))
+    except HTTPError as e:
+        dd_http_error(e)
+
+
+@server.command()
 @click.option('--id', help="Filter by server id")
 @click.option('--datacenterId', help="Filter by datacenter Id")
 @click.option('--networkDomainId', help="Filter by network domain Id")
@@ -248,6 +264,7 @@ def get_single_server_id_from_filters(client, **kwargs):
         dd_http_error(httperror)
 
 
+
 def dd_http_error(e):
     try:
         if e.response.text.startswith('<'):
@@ -265,9 +282,16 @@ def dd_http_error(e):
 def dd_http_success(response):
     try:
         new_dict = flattenDict(response)
-        click.secho("{}".format(new_dict['Status.resultDetail']), fg='green', bold=True)
-        for key in new_dict:
-            if key != 'Status.resultDetail':
-                click.secho("{}: {}".format(key, new_dict[key]))
+        if 'Status.resultDetail' in new_dict:
+            click.secho("{}".format(new_dict['Status.resultDetail']), fg='green', bold=True)
+            for key in new_dict:
+                if key != 'Status.resultDetail':
+                    click.secho("{}: {}".format(key, new_dict[key]))
+        elif 'message' in new_dict:
+            click.secho("{}".format(new_dict['message']), fg='green', bold=True)
+            for key in new_dict:
+                if key != 'message':
+                    click.secho("{}: {}".format(key, new_dict[key]))
+
     except Exception as e:
         raise e
