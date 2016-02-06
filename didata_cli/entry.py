@@ -5,6 +5,8 @@ from didata_cli.utils import flattenDict
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 from libcloud.compute.drivers.dimensiondata import DimensionDataNodeDriver
+from libcloud.backup.drivers.dimensiondata import DimensionDataBackupDriver
+from libcloud.backup.base import BackupTarget
 from libcloud.common.dimensiondata import API_ENDPOINTS, DEFAULT_REGION
 from libcloud.utils.py3 import basestring
 from dimensiondata.client import DimensionDataClient
@@ -17,14 +19,15 @@ import json
 DEFAULT_ENDPOINT = 'https://api-na.dimensiondata.com'
 
 logging.basicConfig(level=logging.CRITICAL)
-class DiDataCLIComputeClient(DimensionDataNodeDriver):
+class DiDataCLIClient(object):
     def __init__(self):
         self.verbose = False
 
     def init_client(self, user, password, region=DEFAULT_REGION):
-        super(DiDataCLIComputeClient, self).__init__(user, password, region)
-
-pass_client = click.make_pass_decorator(DiDataCLIComputeClient, ensure=True)
+        self.node = DimensionDataNodeDriver(user, password, region)
+        self.backup = DimensionDataBackupDriver(user, password, region)
+        self.legacy = DimensionDataClient(user, password)
+pass_client = click.make_pass_decorator(DiDataCLIClient, ensure=True)
 
 @click.group()
 @click.option('--verbose', is_flag=True)
@@ -47,7 +50,7 @@ def server(client):
 @click.option('--dumpall', is_flag=True, default=False, help="Dump all attributes about the server")
 @pass_client
 def list(client, datacenterid, dumpall):
-    node_list = client.list_nodes(ex_location=datacenterid)
+    node_list = client.node.list_nodes(ex_location=datacenterid)
     for node in node_list:
         click.secho("{}".format(node.name), bold=True)
         click.secho("ID: {}".format(node.uuid))
@@ -81,7 +84,7 @@ def list(client, datacenterid, dumpall):
 @pass_client
 def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
     try:
-        response = client.create_node(name, imageid, administratorpassword, description, ex_network_domain=networkdomainid, ex_vlan=vlanid, ex_is_started=autostart)
+        response = client.node.create_node(name, imageid, administratorpassword, description, ex_network_domain=networkdomainid, ex_vlan=vlanid, ex_is_started=autostart)
         click.secho("{}".format(response))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
@@ -93,28 +96,30 @@ def backup(config):
 
 @backup.command()
 @click.option('--serverId', help='The server ID to enable backups on')
-@click.option('--servicePlan', help='The type of service plan to enroll in', type=click.Choice(['Enterprise', 'Essentials', 'Advanced']))
+@click.option('--servicePlan', required=True, help='The type of service plan to enroll in', type=click.Choice(['Enterprise', 'Essentials', 'Advanced']))
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def enable(client, serverid, serviceplan, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        dd_http_success(client.enable_backups_for_server(serverid))
-    except HTTPError as e:
-        dd_http_error(e)
+        extra = {'service_plan': serviceplan }
+        response = client.backup.create_target(serverid, serverid, extra=extra)
+        click.secho("Backups enabled for {}.  Service plan: {}".format(response.id, serviceplan), fg='green', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 @backup.command()
 @click.option('--serverId', help='The server ID to disable backups on')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def disable(client, serverid, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        dd_http_success(client.disable_backups_for_server(serverid))
-    except HTTPError as e:
-        dd_http_error(e)
+        response = client.backup.delete_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver))
+        if response is True:
+            click.secho("Backups disabled for {}".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Backups not disabled for {}".format(serverid, fg='red', bold=True))
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 @backup.command()
 @click.option('--serverId', help='The server ID to disable backups on')
@@ -124,7 +129,7 @@ def info(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        response = client.get_backup_info_for_server(serverid)
+        response = client.legacy.get_backup_info_for_server(serverid)
         new_dict = flattenDict(response)
         for key in sorted(new_dict):
             click.secho("{}: {}".format(key, new_dict[key]))
@@ -139,7 +144,7 @@ def list_client_types(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        client_types = client.get_backup_client_types_for_server(serverid)
+        client_types = client.legacy.get_backup_client_types_for_server(serverid)
         click.secho("Available backup client types for {}: ".format(serverid))
         for item in client_types:
             click.secho(item, bold=True)
@@ -154,7 +159,7 @@ def list_storage_policies(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        storage_policies = client.get_backup_storage_policies_for_server(serverid)
+        storage_policies = client.legacy.get_backup_storage_policies_for_server(serverid)
         click.secho("Available storage policies for {}: ".format(serverid))
         for item in storage_policies:
             click.secho(item, bold=True)
@@ -169,7 +174,7 @@ def list_schedule_policies(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        schedule_policies = client.get_backup_schedule_policies_for_server(serverid)
+        schedule_policies = client.legacy.get_backup_schedule_policies_for_server(serverid)
         click.secho("Available backup client types for {}: ".format(serverid))
         for item in schedule_policies:
             click.secho(item, bold=True)
@@ -189,7 +194,7 @@ def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, trig
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        dd_http_success(client.add_backup_policy_for_server(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail))
+        dd_http_success(client.legacy.add_backup_policy_for_server(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail))
     except HTTPError as e:
         dd_http_error(e)
 
@@ -202,7 +207,7 @@ def remove_client(client, serverid, policy, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        dd_http_success(client.remove_backup_policy_for_server(serverid, policy))
+        dd_http_success(client.legacy.remove_backup_policy_for_server(serverid, policy))
     except HTTPError as e:
         dd_http_error(e)
 
@@ -214,7 +219,7 @@ def download_url(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        click.secho("{}".format(client.get_backup_download_url_for_server(serverid)))
+        click.secho("{}".format(client.legacy.get_backup_download_url_for_server(serverid)))
     except HTTPError as e:
         dd_http_error(e)
     except NoDownloadUrlFound:
@@ -227,7 +232,7 @@ def get_single_server_id_from_filters(client, **kwargs):
         if len(kwargs.keys()) == 0 or not kwargs['ipv6']:
             click.secho("No serverId or filters for servers found")
             exit(1)
-        return client.get_single_server_id(**kwargs)
+        return client.legacy.get_single_server_id(**kwargs)
     except SingleServerReturnFailMultileServers as e:
         click.secho("FAILURE: Multiple Servers found in filter", fg='red', bold=True)
         for server_id in e.server_id_list:
