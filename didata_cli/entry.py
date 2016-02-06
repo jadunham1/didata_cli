@@ -52,24 +52,24 @@ def server(client):
 def list(client, datacenterid, dumpall):
     node_list = client.node.list_nodes(ex_location=datacenterid)
     for node in node_list:
-        click.secho("{}".format(node.name), bold=True)
-        click.secho("ID: {}".format(node.uuid))
-        click.secho("Datacenter: {}".format(node.extra['datacenterId']))
-        click.secho("OS: {}".format(node.extra['OS_displayName']))
-        click.secho("Private IPv4: {}".format(" - ".join(node.private_ips)))
+        click.secho("{0}".format(node.name), bold=True)
+        click.secho("ID: {0}".format(node.uuid))
+        click.secho("Datacenter: {0}".format(node.extra['datacenterId']))
+        click.secho("OS: {0}".format(node.extra['OS_displayName']))
+        click.secho("Private IPv4: {0}".format(" - ".join(node.private_ips)))
         if 'ipv6' in node.extra:
-            click.secho("Private IPv6: {}".format(node.extra['ipv6']))
+            click.secho("Private IPv6: {0}".format(node.extra['ipv6']))
         if dumpall:
-            click.secho("Public IPs: {}".format(" - ".join(node.public_ips)))
-            click.secho("State: {}".format(node.state))
+            click.secho("Public IPs: {0}".format(" - ".join(node.public_ips)))
+            click.secho("State: {0}".format(node.state))
             for key in sorted(node.extra):
                 if key == 'cpu':
-                    click.echo("CPU Count: {}".format(node.extra[key].cpu_count))
-                    click.echo("Cores per Socket: {}".format(node.extra[key].cores_per_socket))
-                    click.echo("CPU Performance: {}".format(node.extra[key].performance))
+                    click.echo("CPU Count: {0}".format(node.extra[key].cpu_count))
+                    click.echo("Cores per Socket: {0}".format(node.extra[key].cores_per_socket))
+                    click.echo("CPU Performance: {0}".format(node.extra[key].performance))
                     continue
                 if key not in ['datacenterId', 'status', 'OS_displayName']:
-                    click.echo("{}: {}".format(key, node.extra[key]))
+                    click.echo("{0}: {1}".format(key, node.extra[key]))
         click.secho("")
 
 
@@ -85,7 +85,7 @@ def list(client, datacenterid, dumpall):
 def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
     try:
         response = client.node.create_node(name, imageid, administratorpassword, description, ex_network_domain=networkdomainid, ex_vlan=vlanid, ex_is_started=autostart)
-        click.secho("{}".format(response))
+        click.secho("{0}".format(response))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -103,7 +103,7 @@ def enable(client, serverid, serviceplan, serverfilteripv6):
     try:
         extra = {'service_plan': serviceplan }
         response = client.backup.create_target(serverid, serverid, extra=extra)
-        click.secho("Backups enabled for {}.  Service plan: {}".format(response.id, serviceplan), fg='green', bold=True)
+        click.secho("Backups enabled for {0}.  Service plan: {1}".format(response.id, serviceplan), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -115,9 +115,9 @@ def disable(client, serverid, serverfilteripv6):
     try:
         response = client.backup.delete_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver))
         if response is True:
-            click.secho("Backups disabled for {}".format(serverid), fg='green', bold=True)
+            click.secho("Backups disabled for {0}".format(serverid), fg='green', bold=True)
         else:
-            click.secho("Backups not disabled for {}".format(serverid, fg='red', bold=True))
+            click.secho("Backups not disabled for {0}".format(serverid, fg='red', bold=True))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -132,7 +132,7 @@ def info(client, serverid, serverfilteripv6):
         response = client.legacy.get_backup_info_for_server(serverid)
         new_dict = flattenDict(response)
         for key in sorted(new_dict):
-            click.secho("{}: {}".format(key, new_dict[key]))
+            click.secho("{0}: {1}".format(key, new_dict[key]))
     except HTTPError as e:
         dd_http_error(e)
 
@@ -145,7 +145,7 @@ def list_client_types(client, serverid, serverfilteripv6):
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         client_types = client.legacy.get_backup_client_types_for_server(serverid)
-        click.secho("Available backup client types for {}: ".format(serverid))
+        click.secho("Available backup client types for {0}: ".format(serverid))
         for item in client_types:
             click.secho(item, bold=True)
     except HTTPError as e:
@@ -160,7 +160,7 @@ def list_storage_policies(client, serverid, serverfilteripv6):
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         storage_policies = client.legacy.get_backup_storage_policies_for_server(serverid)
-        click.secho("Available storage policies for {}: ".format(serverid))
+        click.secho("Available storage policies for {0}: ".format(serverid))
         for item in storage_policies:
             click.secho(item, bold=True)
     except HTTPError as e:
@@ -175,7 +175,7 @@ def list_schedule_policies(client, serverid, serverfilteripv6):
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
         schedule_policies = client.legacy.get_backup_schedule_policies_for_server(serverid)
-        click.secho("Available backup client types for {}: ".format(serverid))
+        click.secho("Available backup client types for {0}: ".format(serverid))
         for item in schedule_policies:
             click.secho(item, bold=True)
     except HTTPError as e:
@@ -219,7 +219,7 @@ def download_url(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
     try:
-        click.secho("{}".format(client.legacy.get_backup_download_url_for_server(serverid)))
+        click.secho("{0}".format(client.legacy.get_backup_download_url_for_server(serverid)))
     except HTTPError as e:
         dd_http_error(e)
     except NoDownloadUrlFound:
@@ -236,7 +236,7 @@ def get_single_server_id_from_filters(client, **kwargs):
     except SingleServerReturnFailMultileServers as e:
         click.secho("FAILURE: Multiple Servers found in filter", fg='red', bold=True)
         for server_id in e.server_id_list:
-            click.secho("{}".format(server_id))
+            click.secho("{0}".format(server_id))
         exit(1)
     except SingleServerReturnFailNoServers as noservers:
         click.secho("FAILURE: No servers found with the given filter", fg='red', bold=True)
@@ -253,29 +253,29 @@ def dd_http_error(e):
         else:
             response = json.loads(e.response.text)
         if 'message' in response:
-            click.secho("FAILURE: {}".format(response['message']), fg='red', bold=True)
+            click.secho("FAILURE: {0}".format(response['message']), fg='red', bold=True)
         elif 'Status' in response:
-            click.secho("FAILURE: {}".format(response['Status']['resultDetail']), fg='red', bold=True)
+            click.secho("FAILURE: {0}".format(response['Status']['resultDetail']), fg='red', bold=True)
         exit(1)
     except Exception:
         raise e
 
 def handle_dd_api_exception(e):
-    click.secho("{}".format(e), fg='red', bold=True)
+    click.secho("{0}".format(e), fg='red', bold=True)
 
 def dd_http_success(response):
     try:
         new_dict = flattenDict(response)
         if 'Status.resultDetail' in new_dict:
-            click.secho("{}".format(new_dict['Status.resultDetail']), fg='green', bold=True)
+            click.secho("{0}".format(new_dict['Status.resultDetail']), fg='green', bold=True)
             for key in new_dict:
                 if key != 'Status.resultDetail':
-                    click.secho("{}: {}".format(key, new_dict[key]))
+                    click.secho("{0}: {}".format(key, new_dict[key]))
         elif 'message' in new_dict:
-            click.secho("{}".format(new_dict['message']), fg='green', bold=True)
+            click.secho("{0}".format(new_dict['message']), fg='green', bold=True)
             for key in new_dict:
                 if key != 'message':
-                    click.secho("{}: {}".format(key, new_dict[key]))
+                    click.secho("{0}: {1}".format(key, new_dict[key]))
 
     except Exception as e:
         raise e
