@@ -2,31 +2,38 @@ import click
 import pprint
 import logging
 from didata_cli.utils import flattenDict
+from libcloud.compute.types import Provider
+from libcloud.compute.providers import get_driver
+from libcloud.compute.drivers.dimensiondata import DimensionDataNodeDriver
+from libcloud.common.dimensiondata import API_ENDPOINTS, DEFAULT_REGION
+from libcloud.utils.py3 import basestring
 from dimensiondata.client import DimensionDataClient
 from requests.exceptions import HTTPError
 from dimensiondata.api.xml_utils import dd_xmltodict
 from dimensiondata.exceptions import (BackupPolicyValidationFailure, SingleServerReturnFailMultileServers,
                                       NoDownloadUrlFound, SingleServerReturnFailNoServers)
+from libcloud.common.dimensiondata import DimensionDataAPIException
 import json
 DEFAULT_ENDPOINT = 'https://api-na.dimensiondata.com'
 
 logging.basicConfig(level=logging.CRITICAL)
-class DiDataCLIClient(DimensionDataClient):
+class DiDataCLIComputeClient(DimensionDataNodeDriver):
     def __init__(self):
         self.verbose = False
 
-    def init_client(self, user, password, endpoint=DEFAULT_ENDPOINT):
-        super(DimensionDataClient, self).__init__(user, password, endpoint)
+    def init_client(self, user, password, region=DEFAULT_REGION):
+        super(DiDataCLIComputeClient, self).__init__(user, password, region)
 
-pass_client = click.make_pass_decorator(DiDataCLIClient, ensure=True)
+pass_client = click.make_pass_decorator(DiDataCLIComputeClient, ensure=True)
 
 @click.group()
 @click.option('--verbose', is_flag=True)
 @click.option('--user', prompt=True)
 @click.option('--password', prompt=True, hide_input=True)
+@click.option('--region', default=DEFAULT_REGION)
 @pass_client
-def cli(client, verbose, user, password):
-    client.init_client(user, password)
+def cli(client, verbose, user, password, region):
+    client.init_client(user, password, region)
     if verbose:
         click.echo('Verbose mode enabled')
 
@@ -36,79 +43,48 @@ def server(client):
     pass
 
 @server.command()
+@click.option('--datacenterId', help="Filter by datacenter Id")
+@click.option('--dumpall', is_flag=True, default=False, help="Dump all attributes about the server")
+@pass_client
+def list(client, datacenterid, dumpall):
+    node_list = client.list_nodes(ex_location=datacenterid)
+    for node in node_list:
+        click.secho("{}".format(node.name), bold=True)
+        click.secho("ID: {}".format(node.uuid))
+        click.secho("Datacenter: {}".format(node.extra['datacenterId']))
+        click.secho("OS: {}".format(node.extra['OS_displayName']))
+        click.secho("Private IPv4: {}".format(" - ".join(node.private_ips)))
+        if 'ipv6' in node.extra:
+            click.secho("Private IPv6: {}".format(node.extra['ipv6']))
+        if dumpall:
+            click.secho("Public IPs: {}".format(" - ".join(node.public_ips)))
+            click.secho("State: {}".format(node.state))
+            for key in sorted(node.extra):
+                if key == 'cpu':
+                    click.echo("CPU Count: {}".format(node.extra[key].cpu_count))
+                    click.echo("Cores per Socket: {}".format(node.extra[key].cores_per_socket))
+                    click.echo("CPU Performance: {}".format(node.extra[key].performance))
+                    continue
+                if key not in ['datacenterId', 'status', 'OS_displayName']:
+                    click.echo("{}: {}".format(key, node.extra[key]))
+        click.secho("")
+
+
+@server.command()
 @click.option('--name', required=True, help="The name of the server")
 @click.option('--description', required=True, help="The description of the server")
 @click.option('--imageId', required=True, help="The image id for the server")
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
 @click.option('--administratorPassword', required=True, help="The administrator password")
-@click.option('--networkDomainId', required=True, help="The network domain Id to deploy on")
+@click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
 @click.option('--vlanId', required=True, help="The vlan Id to deploy on")
 @pass_client
 def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
     try:
-        dd_http_success(client.deploy_server(name, description, imageid, autostart, administratorpassword, None, networkdomainid, vlanid))
-    except HTTPError as e:
-        dd_http_error(e)
-
-
-@server.command()
-@click.option('--id', help="Filter by server id")
-@click.option('--datacenterId', help="Filter by datacenter Id")
-@click.option('--networkDomainId', help="Filter by network domain Id")
-@click.option('--networkId', help="Filter by network id")
-@click.option('--vlanId', help="Filter by vlan id")
-@click.option('--sourceImageId', help="Filter by source image id")
-@click.option('--deployed', help="Filter by deployed state")
-@click.option('--name', help="Filter by server name")
-@click.option('--createTime', help="Filter by creation time")
-@click.option('--state', help="Filter by state")
-@click.option('--started', help="Filter by started")
-@click.option('--operatingSystemId', help="Filter by operating system id")
-@click.option('--ipv6', help="Filter by ipv6")
-@click.option('--privateIpv4', help="Filter by private ipv4")
-@click.option('--dumpall', is_flag=True, default=False, help="Dump all attributes about the server")
-@pass_client
-def list(client, id, datacenterid, networkdomainid, networkid,
-         vlanid, sourceimageid, deployed, name,
-         createtime, state, started, operatingsystemid,
-         ipv6, privateipv4, dumpall):
-    click.echo("Finding servers")
-    servers = client.get_servers(id=id, datacenterId=datacenterid,
-                                 networkDomainId=networkdomainid, vlanId=vlanid,
-                                 networkId=networkid, sourceImageId=sourceimageid,
-                                 deployed=deployed, name=name, createTime=createtime,
-                                 state=state, started=started,
-                                 operatingSystemId=operatingsystemid, ipv6=ipv6,
-                                 privateIpv4=privateipv4)
-    for server in servers:
-        click.secho("{}".format(server['name']), bold=True)
-        if dumpall:
-            new_dict = flattenDict(server)
-            for key in sorted(new_dict):
-                click.secho("{}: {}".format(key, new_dict[key]))
-            click.secho("")
-            continue
-        mcp=1
-        if('networkInfo' in server):
-            mcp=2
-
-        if('id' in server):
-            click.secho("Server Id: {}".format(server['id']))
-        if('datacenterId' in server):
-            click.secho("Datacenter: {}".format(server['datacenterId']))
-
-        if(mcp == 2):
-            if('ipv6' in server['networkInfo']['primaryNic']):
-                click.secho("IPv6: {}".format(server['networkInfo']['primaryNic']['ipv6']))
-            if('privateIpv4' in server['networkInfo']['primaryNic']):
-                click.secho("Private IPv4: {}".format(server['networkInfo']['primaryNic']['privateIpv4']))
-        elif(mcp == 1):
-            if('privateIpv4' in server['nic']):
-                click.secho("Private IPv4: {}".format(server['nic']['privateIpv4']))
-        if('displayName' in server['operatingSystem']):
-            click.secho("OS: {}".format(server['operatingSystem']['displayName']))
-        click.secho("")
-
+        response = client.create_node(name, imageid, administratorpassword, description, ex_network_domain=networkdomainid, ex_vlan=vlanid, ex_is_started=autostart)
+        click.secho("{}".format(response))
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 @cli.group()
 @pass_client
@@ -278,6 +254,9 @@ def dd_http_error(e):
         exit(1)
     except Exception:
         raise e
+
+def handle_dd_api_exception(e):
+    click.secho("{}".format(e), fg='red', bold=True)
 
 def dd_http_success(response):
     try:
