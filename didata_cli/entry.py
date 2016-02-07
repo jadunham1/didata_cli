@@ -139,6 +139,11 @@ def info(client, serverid, serverfilteripv6):
                 click.secho("Schedule: {0}".format(backup_client.schedule_policy))
                 click.secho("Retention: {0}".format(backup_client.storage_policy))
                 click.secho("DownloadURL: {0}".format(backup_client.download_url))
+                if backup_client.running_job is not None:
+                    click.secho("Running Job", bold=True)
+                    click.secho("ID: {0}".format(backup_client.running_job.id))
+                    click.secho("Status: {0}".format(backup_client.running_job.status))
+                    click.secho("Percentage Complete: {0}".format(backup_client.running_job.percentage))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -194,42 +199,10 @@ def get_single_server_id_from_filters(client, **kwargs):
             click.secho("No nodes found with fitler", fg='red', bold=True)
             exit(1)
         return node_list[0].id
-    except HTTPError as httperror:
-        dd_http_error(httperror)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
-
-
-def dd_http_error(e):
-    try:
-        if e.response.text.startswith('<'):
-            response =  dd_xmltodict(e.response.text)
-        else:
-            response = json.loads(e.response.text)
-        if 'message' in response:
-            click.secho("FAILURE: {0}".format(response['message']), fg='red', bold=True)
-        elif 'Status' in response:
-            click.secho("FAILURE: {0}".format(response['Status']['resultDetail']), fg='red', bold=True)
-        exit(1)
-    except Exception:
-        raise e
 
 def handle_dd_api_exception(e):
     click.secho("{0}".format(e), fg='red', bold=True)
     exit(1)
-
-def dd_http_success(response):
-    try:
-        new_dict = flattenDict(response)
-        if 'Status.resultDetail' in new_dict:
-            click.secho("{0}".format(new_dict['Status.resultDetail']), fg='green', bold=True)
-            for key in new_dict:
-                if key != 'Status.resultDetail':
-                    click.secho("{0}: {}".format(key, new_dict[key]))
-        elif 'message' in new_dict:
-            click.secho("{0}".format(new_dict['message']), fg='green', bold=True)
-            for key in new_dict:
-                if key != 'message':
-                    click.secho("{0}: {1}".format(key, new_dict[key]))
-
-    except Exception as e:
-        raise e
