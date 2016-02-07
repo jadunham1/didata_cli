@@ -215,6 +215,7 @@ def dd_http_error(e):
 
 def handle_dd_api_exception(e):
     click.secho("{0}".format(e), fg='red', bold=True)
+    exit(1)
 
 def dd_http_success(response):
     try:
