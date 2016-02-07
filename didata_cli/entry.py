@@ -8,12 +8,6 @@ from libcloud.compute.drivers.dimensiondata import DimensionDataNodeDriver
 from libcloud.backup.drivers.dimensiondata import DimensionDataBackupDriver
 from libcloud.backup.base import BackupTarget
 from libcloud.common.dimensiondata import API_ENDPOINTS, DEFAULT_REGION
-from libcloud.utils.py3 import basestring
-from dimensiondata.client import DimensionDataClient
-from requests.exceptions import HTTPError
-from dimensiondata.api.xml_utils import dd_xmltodict
-from dimensiondata.exceptions import (BackupPolicyValidationFailure, SingleServerReturnFailMultileServers,
-                                      NoDownloadUrlFound, SingleServerReturnFailNoServers)
 from libcloud.common.dimensiondata import DimensionDataAPIException
 import json
 DEFAULT_ENDPOINT = 'https://api-na.dimensiondata.com'
@@ -26,7 +20,7 @@ class DiDataCLIClient(object):
     def init_client(self, user, password, region=DEFAULT_REGION):
         self.node = DimensionDataNodeDriver(user, password, region)
         self.backup = DimensionDataBackupDriver(user, password, region)
-        self.legacy = DimensionDataClient(user, password)
+
 pass_client = click.make_pass_decorator(DiDataCLIClient, ensure=True)
 
 @click.group()
@@ -100,10 +94,12 @@ def backup(config):
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def enable(client, serverid, serviceplan, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
         extra = {'service_plan': serviceplan }
         response = client.backup.create_target(serverid, serverid, extra=extra)
-        click.secho("Backups enabled for {0}.  Service plan: {1}".format(response.id, serviceplan), fg='green', bold=True)
+        click.secho("Backups enabled for {0}.  Service plan: {1}".format(serverid, serviceplan), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -112,6 +108,8 @@ def enable(client, serverid, serviceplan, serverfilteripv6):
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def disable(client, serverid, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
         response = client.backup.delete_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver))
         if response is True:
@@ -127,59 +125,22 @@ def disable(client, serverid, serverfilteripv6):
 @pass_client
 def info(client, serverid, serverfilteripv6):
     if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        response = client.legacy.get_backup_info_for_server(serverid)
-        new_dict = flattenDict(response)
-        for key in sorted(new_dict):
-            click.secho("{0}: {1}".format(key, new_dict[key]))
-    except HTTPError as e:
-        dd_http_error(e)
-
-@backup.command(help='This will list the backup client types availabe for a given server i.e. FA.Linux/MySQL')
-@click.option('--serverId', help='The server ID to list client types for')
-@click.option('--serverFilterIpv6', help='The filter for ipv6')
-@pass_client
-def list_client_types(client, serverid, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
-    try:
-        client_types = client.legacy.get_backup_client_types_for_server(serverid)
-        click.secho("Available backup client types for {0}: ".format(serverid))
-        for item in client_types:
-            click.secho(item, bold=True)
-    except HTTPError as e:
-        dd_http_error(e)
-
-@backup.command(help='This will list the storage policies availabe for a given server i.e. 7 Years')
-@click.option('--serverId', help='The server ID to list storage policies for')
-@click.option('--serverFilterIpv6', help='The filter for ipv6')
-@pass_client
-def list_storage_policies(client, serverid, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
-    try:
-        storage_policies = client.legacy.get_backup_storage_policies_for_server(serverid)
-        click.secho("Available storage policies for {0}: ".format(serverid))
-        for item in storage_policies:
-            click.secho(item, bold=True)
-    except HTTPError as e:
-        dd_http_error(e)
-
-@backup.command(help='This will list the backup storage schedules for a given server i.e. 12 AM - 6 AM')
-@click.option('--serverId', help='The server ID to list backup schedules for')
-@click.option('--serverFilterIpv6', help='The filter for ipv6')
-@pass_client
-def list_schedule_policies(client, serverid, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
-    try:
-        schedule_policies = client.legacy.get_backup_schedule_policies_for_server(serverid)
-        click.secho("Available backup client types for {0}: ".format(serverid))
-        for item in schedule_policies:
-            click.secho(item, bold=True)
-    except HTTPError as e:
-        dd_http_error(e)
+        details = client.backup.ex_get_backup_details_for_target(serverid)
+        click.secho("Backup Details for {0}".format(serverid))
+        click.secho("Service Plan: {0}".format(details.service_plan[0]))
+        if len(details.clients) > 0:
+            click.secho("Clients:")
+            for backup_client in details.clients:
+                click.secho("")
+                click.secho("{0}".format(backup_client.type), bold=True)
+                click.secho("Description: {0}".format(backup_client.description))
+                click.secho("Schedule: {0}".format(backup_client.schedule_policy))
+                click.secho("Retention: {0}".format(backup_client.storage_policy))
+                click.secho("DownloadURL: {0}".format(backup_client.download_url))
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 @backup.command(help='Adds a backup client')
 @click.option('--serverId', help='The server ID to list backup schedules for')
@@ -192,24 +153,15 @@ def list_schedule_policies(client, serverid, serverfilteripv6):
 @pass_client
 def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail, serverfilteripv6):
     if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        dd_http_success(client.legacy.add_backup_policy_for_server(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail))
-    except HTTPError as e:
-        dd_http_error(e)
-
-@backup.command(help='Removes a backup client')
-@click.option('--serverId', help='The server ID to list backup schedules for')
-@click.option('--policy', required=True, help='The server ID to list backup schedules for')
-@click.option('--serverFilterIpv6', help='The filter for ipv6')
-@pass_client
-def remove_client(client, serverid, policy, serverfilteripv6):
-    if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
-    try:
-        dd_http_success(client.legacy.remove_backup_policy_for_server(serverid, policy))
-    except HTTPError as e:
-        dd_http_error(e)
+        response = client.backup.ex_add_client_to_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver), clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail)
+        if response is True:
+            click.secho("Backups disabled for {0}".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Backups not disabled for {0}".format(serverid, fg='red', bold=True))
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 @backup.command(help='Fetch Download URL for Server')
 @click.option('--serverId', help='The server ID to list backup schedules for')
@@ -217,30 +169,31 @@ def remove_client(client, serverid, policy, serverfilteripv6):
 @pass_client
 def download_url(client, serverid, serverfilteripv6):
     if not serverid:
-        serverid = get_single_server_id_from_filters(client, ipv6=serverfilteripv6)
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        click.secho("{0}".format(client.legacy.get_backup_download_url_for_server(serverid)))
-    except HTTPError as e:
-        dd_http_error(e)
-    except NoDownloadUrlFound:
-        click.secho('FAILURE: No backup clients are configured for this server', fg='red', bold=True)
+        details = client.backup.ex_get_backup_details_for_target(serverid)
+        if len(details.clients) < 1:
+            click.secho("No clients configured so there is no backup url", fg='red', bold=True)
+            exit(1)
+        click.secho("{0}".format(details.clients[0].download_url))
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
 
 
 def get_single_server_id_from_filters(client, **kwargs):
     try:
         # fix this line
-        if len(kwargs.keys()) == 0 or not kwargs['ipv6']:
+        if len(kwargs.keys()) == 0 or not kwargs['ex_ipv6']:
             click.secho("No serverId or filters for servers found")
             exit(1)
-        return client.legacy.get_single_server_id(**kwargs)
-    except SingleServerReturnFailMultileServers as e:
-        click.secho("FAILURE: Multiple Servers found in filter", fg='red', bold=True)
-        for server_id in e.server_id_list:
-            click.secho("{0}".format(server_id))
-        exit(1)
-    except SingleServerReturnFailNoServers as noservers:
-        click.secho("FAILURE: No servers found with the given filter", fg='red', bold=True)
-        exit(1)
+        node_list = client.node.list_nodes(**kwargs)
+        if len(node_list) > 1:
+            click.secho("Too many nodes found in filter", fg='red', bold=True)
+            exit(1)
+        if len(node_list) == 0:
+            click.secho("No nodes found with fitler", fg='red', bold=True)
+            exit(1)
+        return node_list[0].id
     except HTTPError as httperror:
         dd_http_error(httperror)
 
