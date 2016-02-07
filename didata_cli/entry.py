@@ -72,7 +72,7 @@ def list(client, datacenterid, dumpall):
 @click.option('--description', required=True, help="The description of the server")
 @click.option('--imageId', required=True, help="The image id for the server")
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
-@click.option('--administratorPassword', required=True, help="The administrator password")
+@click.option('--administratorPassword', required=True, type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
 @click.option('--vlanId', required=True, help="The vlan Id to deploy on")
 @pass_client
@@ -161,10 +161,7 @@ def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, trig
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
         response = client.backup.ex_add_client_to_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver), clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail)
-        if response is True:
-            click.secho("Backups disabled for {0}".format(serverid), fg='green', bold=True)
-        else:
-            click.secho("Backups not disabled for {0}".format(serverid, fg='red', bold=True))
+        click.secho("Enabled {0} client on {1}".format(clienttype, serverid, fg='red', bold=True))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
