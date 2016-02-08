@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+import didata_cli.entry
+
+def main():
+    return didata_cli.entry.cli(auto_envvar_prefix='DIDATA')
+
+if __name__ == '__main__':
+    main()
