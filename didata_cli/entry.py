@@ -94,7 +94,7 @@ def list(client, datacenterid, networkdomainid, networkid,
 def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
     try:
         response = client.node.create_node(name, imageid, administratorpassword, description, ex_network_domain=networkdomainid, ex_vlan=vlanid, ex_is_started=autostart)
-        click.secho("Node starting up: {0}.  IPv6: {1}".format(response.id, response.extra['ipv6']))
+        click.secho("Node starting up: {0}.  IPv6: {1}".format(response.id, response.extra['ipv6']), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -110,7 +110,7 @@ def destroy(client, serverid, serverfilteripv6):
     try:
         response = client.node.destroy_node(node)
         if response == True:
-            click.secho("Server {0} is being destroyed".format(serverid))
+            click.secho("Server {0} is being destroyed".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong with attempting to destroy {0}".format(serverid))
     except DimensionDataAPIException as e:
@@ -128,7 +128,7 @@ def reboot(client, serverid, serverfilteripv6):
     try:
         response = client.node.reboot_node(node)
         if response == True:
-            click.secho("Server {0} is being rebooted".format(serverid))
+            click.secho("Server {0} is being rebooted".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong with attempting to reboot {0}".format(serverid))
     except DimensionDataAPIException as e:
@@ -146,7 +146,7 @@ def reboot_hard(client, serverid, serverfilteripv6):
     try:
         response = client.node.ex_reset(node)
         if response == True:
-            click.secho("Server {0} is being rebooted".format(serverid))
+            click.secho("Server {0} is being rebooted".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong with attempting to reboot {0}".format(serverid))
     except DimensionDataAPIException as e:
@@ -164,7 +164,7 @@ def start(client, serverid, serverfilteripv6):
     try:
         response = client.node.ex_start_node(node)
         if response == True:
-            click.secho("Server {0} is starting".format(serverid))
+            click.secho("Server {0} is starting".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong when attempting to start {0}".format(serverid))
     except DimensionDataAPIException as e:
@@ -182,7 +182,7 @@ def shutdown(client, serverid, serverfilteripv6):
     try:
         response = client.node.ex_shutdown_graceful(node)
         if response == True:
-            click.secho("Server {0} is shutting down gracefully".format(serverid))
+            click.secho("Server {0} is shutting down gracefully".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong when attempting to shutdown {0}".format(serverid))
     except DimensionDataAPIException as e:
@@ -200,7 +200,7 @@ def shutdown_hard(client, serverid, serverfilteripv6):
     try:
         response = client.node.ex_power_off(node)
         if response == True:
-            click.secho("Server {0} is shutting down hard".format(serverid))
+            click.secho("Server {0} is shutting down hard".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong when attempting to shut down {0}".format(serverid))
     except DimensionDataAPIException as e:
