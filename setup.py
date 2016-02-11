@@ -33,7 +33,7 @@ setup(
     license='Apache License (2.0)',
     url="https://www.dimensiondata.com/",
     name="didata_cli",
-    version="0.1.3",
+    version="0.1.5",
     packages=find_packages(exclude=["contrib", "docs", "tests*", "tasks", "venv"]),
     install_requires=requires,
     setup_requires=[],
@@ -45,7 +45,7 @@ setup(
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.4',
     ],
-    dependency_links = ['https://github.com/apache/libcloud/tarball/trunk#egg=apache-libcloud-1.0.0-pre1'],
+    dependency_links = ['https://github.com/apache/libcloud/tarball/trunk#egg=apache-libcloud-1.0.0-pre1-71'],
     entry_points='''
         [console_scripts]
         didata=didata_cli.cli:cli
