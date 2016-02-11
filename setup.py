@@ -36,6 +36,14 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests*", "tasks", "venv"]),
     install_requires=requires,
     setup_requires=[],
+    classifiers=[
+                'Development Status :: 4 - Beta',
+                'License :: OSI Approved :: Apache Software License',
+                'Intended Audience :: End Users/Desktop',
+                'Programming Language :: Python',
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.4',
+    ],
     entry_points='''
         [console_scripts]
         didata=didata_cli.cli:cli
