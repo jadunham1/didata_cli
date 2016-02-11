@@ -28,6 +28,18 @@ def list_network_domains(client, datacenterid):
         handle_dd_api_exception(e)
 
 @cli.command()
+@click.option('--datacenterId', required=True, type=click.UNPROCESSED, help="Location for the network domain")
+@click.option('--name', required=True, help="Name for the network")
+@click.option('--servicePlan', required=True, help="Service plan")
+@pass_client
+def create_network(client, datacenterid, name):
+    try:
+        network = client.node.ex_create_network(datacenterid, name)
+        click.secho("Network {0} created in {1}".format(name, datacenterid), fg='green', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+@cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
 @pass_client
 def list_networks(client, datacenterid):
