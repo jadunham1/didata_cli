@@ -81,9 +81,33 @@ def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, trig
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
         response = client.backup.ex_add_client_to_target(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail)
-        click.secho("Enabled {0} client on {1}".format(clienttype, serverid, fg='red', bold=True))
+        click.secho("Enabled {0} client on {1}".format(clienttype, serverid), fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
+@cli.command(help='Removes a backup client')
+@click.option('--serverId', help='The server ID to list backup schedules for')
+@click.option('--clientType', required=True, help='The server ID to list backup schedules for')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
+@pass_client
+def remove_client(client, serverid, clienttype, serverfilteripv6):
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    try:
+        details = client.backup.ex_get_backup_details_for_target(serverid)
+        if len(details.clients) <= 0:
+            click.secho("No clients found for {0}".format(serverid), fg='red', bold=True)
+            exit(1)
+        else:
+            for backup_client in details.clients:
+                if backup_client.type.type == clienttype:
+                    client.backup.ex_remove_client_from_target(serverid, backup_client)
+                    click.secho("Successfully removed client {0} from {1}".format(clienttype, serverid), fg='green', bold=True)
+                    exit(0)
+            click.secho("Could not find a client {0} on {1}".format(clienttype, serverid), fg='red', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
 
 @cli.command(help='Fetch Download URL for Server')
 @click.option('--serverId', help='The server ID to list backup schedules for')
