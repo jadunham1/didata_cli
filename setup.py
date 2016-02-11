@@ -17,7 +17,8 @@ import sys
 from setuptools import setup, find_packages
 
 wargs = {}
-requires = ['click', 'apache-libcloud']
+requires = ['click',
+            'apache-libcloud>=1.0.0-pre1']
 
 # python 2.7 hackery
 if sys.version_info <= (3, 0):
@@ -44,6 +45,7 @@ setup(
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.4',
     ],
+    dependency_links = ['https://github.com/apache/libcloud/tarball/trunk#egg=apache-libcloud-1.0.0-pre1'],
     entry_points='''
         [console_scripts]
         didata=didata_cli.cli:cli
