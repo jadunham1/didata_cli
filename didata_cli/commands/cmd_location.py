@@ -1,14 +1,14 @@
 import click
 from didata_cli.cli import pass_client
 from libcloud.common.dimensiondata import DimensionDataAPIException
-from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
-from libcloud.common.dimensiondata import DimensionDataAPIException
+from didata_cli.utils import handle_dd_api_exception
 
 
 @click.group()
 @pass_client
 def cli(client):
     pass
+
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")

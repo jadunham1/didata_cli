@@ -1,14 +1,14 @@
 import click
 from didata_cli.cli import pass_client
 from libcloud.common.dimensiondata import DimensionDataAPIException
-from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
-from libcloud.common.dimensiondata import DimensionDataAPIException
+from didata_cli.utils import handle_dd_api_exception
 
 
 @click.group()
 @pass_client
 def cli(client):
     pass
+
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
@@ -27,6 +27,7 @@ def list_network_domains(client, datacenterid):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
+
 @cli.command()
 @click.option('--datacenterId', required=True, type=click.UNPROCESSED, help="Location for the network domain")
 @click.option('--name', required=True, help="Name for the network")
@@ -34,10 +35,11 @@ def list_network_domains(client, datacenterid):
 @pass_client
 def create_network(client, datacenterid, name):
     try:
-        network = client.node.ex_create_network(datacenterid, name)
+        client.node.ex_create_network(datacenterid, name)
         click.secho("Network {0} created in {1}".format(name, datacenterid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
@@ -55,25 +57,13 @@ def list_networks(client, datacenterid):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
-@cli.command()
-@click.option('--datacenterId', required=True, type=click.UNPROCESSED, help="Location for the network")
-@click.option('--name', required=True, help="Name for the network")
-@pass_client
-def create_network(client, datacenterid, name):
-    try:
-        network = client.node.ex_create_network(datacenterid, name)
-        click.secho("Network {0} created in {1}".format(name, datacenterid), fg='green', bold=True)
-    except DimensionDataAPIException as e:
-        handle_dd_api_exception(e)
 
 @cli.command()
 @click.option('--networkId', required=True, help="ID of the network to remove")
 @pass_client
 def delete_network(client, networkid):
     try:
-        network = client.node.ex_delete_network(networkid)
+        client.node.ex_delete_network(networkid)
         click.secho("Network {0} deleted.".format(id), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
-
-
