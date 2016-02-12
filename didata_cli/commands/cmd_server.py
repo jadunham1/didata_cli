@@ -9,7 +9,7 @@ def cli(client):
     pass
 
 @cli.command()
-@click.option('--datacenterId', help="Filter by datacenter Id")
+@click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
 @click.option('--networkDomainId', help="Filter by network domain Id")
 @click.option('--networkId', help="Filter by network id")
 @click.option('--vlanId', help="Filter by vlan id")
@@ -68,7 +68,7 @@ def create(client, name, description, imageid, autostart, administratorpassword,
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to destroy')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to destroy')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def destroy(client, serverid, serverfilteripv6):
@@ -86,7 +86,7 @@ def destroy(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to reboot')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to reboot')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def reboot(client, serverid, serverfilteripv6):
@@ -104,7 +104,7 @@ def reboot(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to reboot')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to reboot')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def reboot_hard(client, serverid, serverfilteripv6):
@@ -122,7 +122,7 @@ def reboot_hard(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to start')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to start')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def start(client, serverid, serverfilteripv6):
@@ -140,7 +140,7 @@ def start(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to shutdown')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to shutdown')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def shutdown(client, serverid, serverfilteripv6):
@@ -158,7 +158,7 @@ def shutdown(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 @cli.command()
-@click.option('--serverId', help='The server ID to shutdown')
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to shutdown')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def shutdown_hard(client, serverid, serverfilteripv6):
