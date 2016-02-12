@@ -1,6 +1,7 @@
 import click
 from libcloud.common.dimensiondata import DimensionDataAPIException
 
+
 def get_single_server_id_from_filters(client, **kwargs):
     try:
         # fix this line
@@ -23,8 +24,8 @@ def handle_dd_api_exception(e):
     click.secho("{0}".format(e), fg='red', bold=True)
     exit(1)
 
+
 def flattenDict(d, result=None):
-    data = [1, 2]
     if result is None:
         result = {}
     for key in d:
@@ -47,4 +48,3 @@ def flattenDict(d, result=None):
         else:
             result[key] = value
     return result
-

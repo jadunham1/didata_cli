@@ -1,12 +1,12 @@
 import click
-import logging
 from libcloud.compute.drivers.dimensiondata import DimensionDataNodeDriver
 from libcloud.backup.drivers.dimensiondata import DimensionDataBackupDriver
-from libcloud.common.dimensiondata import API_ENDPOINTS, DEFAULT_REGION
+from libcloud.common.dimensiondata import DEFAULT_REGION
 import os
 import sys
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix='DIDATA')
+
 
 class DiDataCLIClient(object):
     def __init__(self):
@@ -19,6 +19,7 @@ class DiDataCLIClient(object):
 pass_client = click.make_pass_decorator(DiDataCLIClient, ensure=True)
 cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__),
                              'commands'))
+
 
 class DiDataCLI(click.MultiCommand):
 
@@ -37,9 +38,10 @@ class DiDataCLI(click.MultiCommand):
                 name = name.encode('ascii', 'replace')
             mod = __import__('didata_cli.commands.cmd_' + name,
                              None, None, ['cli'])
-        except ImportError as e:
+        except ImportError:
             return
         return mod.cli
+
 
 @click.command(cls=DiDataCLI, context_settings=CONTEXT_SETTINGS)
 @click.option('--verbose', is_flag=True)

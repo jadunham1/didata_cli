@@ -3,25 +3,29 @@ from didata_cli.cli import pass_client
 from libcloud.common.dimensiondata import DimensionDataAPIException
 from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
 
+
 @click.group()
 @pass_client
 def cli(config):
     pass
 
+
 @cli.command()
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to enable backups on')
-@click.option('--servicePlan', required=True, help='The type of service plan to enroll in', type=click.Choice(['Enterprise', 'Essentials', 'Advanced']))
+@click.option('--servicePlan', required=True, help='The type of service plan to enroll in',
+              type=click.Choice(['Enterprise', 'Essentials', 'Advanced']))
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def enable(client, serverid, serviceplan, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        extra = {'service_plan': serviceplan }
-        response = client.backup.create_target(serverid, serverid, extra=extra)
+        extra = {'service_plan': serviceplan}
+        client.backup.create_target(serverid, serverid, extra=extra)
         click.secho("Backups enabled for {0}.  Service plan: {1}".format(serverid, serviceplan), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command()
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to disable backups on')
@@ -31,13 +35,14 @@ def disable(client, serverid, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        response = client.backup.delete_target(BackupTarget(serverid, serverid, serverid, None, DimensionDataBackupDriver))
+        response = client.backup.delete_target(serverid)
         if response is True:
             click.secho("Backups disabled for {0}".format(serverid), fg='green', bold=True)
         else:
             click.secho("Backups not disabled for {0}".format(serverid, fg='red', bold=True))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command()
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to disable backups on')
@@ -67,6 +72,7 @@ def info(client, serverid, serverfilteripv6):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
+
 @cli.command(help='Adds a backup client')
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to list backup schedules for')
 @click.option('--clientType', required=True, help='The server ID to list backup schedules for')
@@ -80,10 +86,12 @@ def add_client(client, serverid, clienttype, storagepolicy, schedulepolicy, trig
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        response = client.backup.ex_add_client_to_target(serverid, clienttype, storagepolicy, schedulepolicy, triggeron, notifyemail)
+        client.backup.ex_add_client_to_target(serverid, clienttype, storagepolicy,
+                                              schedulepolicy, triggeron, notifyemail)
         click.secho("Enabled {0} client on {1}".format(clienttype, serverid), fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command(help='Removes a backup client')
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to list backup schedules for')
@@ -102,7 +110,8 @@ def remove_client(client, serverid, clienttype, serverfilteripv6):
             for backup_client in details.clients:
                 if backup_client.type.type == clienttype:
                     client.backup.ex_remove_client_from_target(serverid, backup_client)
-                    click.secho("Successfully removed client {0} from {1}".format(clienttype, serverid), fg='green', bold=True)
+                    click.secho("Successfully removed client {0} from {1}".format(clienttype, serverid),
+                                fg='green', bold=True)
                     exit(0)
             click.secho("Could not find a client {0} on {1}".format(clienttype, serverid), fg='red', bold=True)
     except DimensionDataAPIException as e:
@@ -125,6 +134,7 @@ def download_url(client, serverid, serverfilteripv6):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
+
 @cli.command(help='List client types available for server')
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to list backup client types for')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
@@ -143,6 +153,7 @@ def list_available_client_types(client, serverid, serverfilteripv6):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
+
 @cli.command(help='List schedule policies for server')
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to list backup schedules for')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
@@ -160,6 +171,7 @@ def list_available_schedule_policies(client, serverid, serverfilteripv6):
             click.secho("{0}".format(schedule.name))
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command(help='List storage policies for server')
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to list backup storage polciies for')
