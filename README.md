@@ -1,1 +1,0 @@
-# didata_cli
