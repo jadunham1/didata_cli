@@ -1,29 +1,28 @@
 language: python
-# Add or remove version for match with Travis support
 python:
-    - 2.6
-    - 2.7
-    - 3.2
-    - 3.3
-    - 3.4
-    - 3.5
-    - pypy
-    - pypy3
+- 2.6
+- 2.7
+- 3.2
+- 3.3
+- 3.4
+- 3.5
+- pypy
+- pypy3
 os:
-  - linux
-
+- linux
 matrix:
   fast_finish: true
   include:
-    - env: ENV=lint
-      python: 2.7
-      before_script: TOX_ENV=lint
-
+  - env: ENV=lint
+    python: 2.7
+    before_script: TOX_ENV=lint
 install:
-  - pip install --upgrade "pip<8.0.0"
-  - pip install "virtualenv<14.0.0"
-  - pip install "tox>=2.3.0,<2.4"
-  - TOX_ENV=py$TRAVIS_PYTHON_VERSION
-
+- pip install --upgrade "pip<8.0.0"
+- pip install "virtualenv<14.0.0"
+- pip install "tox>=2.3.0,<2.4"
+- TOX_ENV=py$TRAVIS_PYTHON_VERSION
 script:
-  - tox -e $TOX_ENV
+- tox -e $TOX_ENV
+notifications:
+  slack:
+    secure: TOG+YQkhgHC1Ga/nqdZodBiCqh5dRa9+uC1aPKwwRXPJX8EKxu3lq6DVMMAcaD90RGQ6G4YKGwIXbRlKR6wH90nw0NPiphMsLNa4X45UMUWQ71yJadjz9eFbN2jzpdlfWafZWz2RfXfF2moRdo2nXB3wz0PpfPrjm5OHeHYMnUCAJb7L9YPAhoHblT6/m28YmuW+cbjjIMiq8Vb5xSWuSqZQLNTCdAyMMH5q1XIMqhI/KCdUZbxV0hKjjj9g3FQLhH3DwX5VRuX8Ly2uexIyjHmNnaOsMDjAUGos04HR6JSM5XmtemjFoDh9UmewycuiCwCeRvqDytje0yZrUOWFEG8x0aEDB7Ari0ta6pjEbYh/ZCXUFYOcfzY9LVpCf7RvZ+XNA1RG8K5mjN+ublr0mt/1bxTl1fvhi7oja3g10DQbP8YNys2bEZLBw3bDjnWNAY2L0YhEXMDhyoJ1cWImqQccgpOVsgVYVInHm2XffkJ9OpahbNfjmOqskxNsx/jHjMOzBho0KOh1Mn7cr32b4L1befA/aoHP5lglcNliGBXw1aTwETc1vzT1pdJlf0rcHYHOblXcIouz03cPAMMGW+HPt9+XC2ZDeJY9URllQB4oPPp5NfzSGSv92HeGj2iguDA9irIs1a77ZUwBL5AIZs6tuXx6w4tQjG2N2AAEc2U=
