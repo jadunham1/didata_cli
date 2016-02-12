@@ -1,0 +1,2 @@
+apache-libcloud>=1.0.0rc1
+click>=6.2
