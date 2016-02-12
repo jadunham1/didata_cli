@@ -1,4 +1,4 @@
-anguage: python
+language: python
 sudo: true
 # Add or remove version for match with Travis support
 python:
