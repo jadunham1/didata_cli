@@ -3,6 +3,8 @@ Dimension Data CLI - A CLI into the Dimension Data Cloud
 .. image:: https://travis-ci.org/DimensionDataDevOps/didata_cli.svg?branch=master
     :target: https://travis-ci.org/DimensionDataDevOps/didata_cli
 
+.. image:: https://badge.fury.io/py/didata_cli.svg
+    :target: https://badge.fury.io/py/didata_cli
 
 Contributing
 ============
