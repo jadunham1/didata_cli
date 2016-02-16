@@ -9,6 +9,7 @@ lib64/
 dist/
 *.egg-info/
 .coverage
+.didata_cfg
 htmlcov/
 .tox/
 venv/
