@@ -17,8 +17,7 @@ def cli(client):
 def list_vlans(client, datacenterid, networkdomainid):
     try:
         if networkdomainid is not None:
-            networkdomainid = DimensionDataNetworkDomain(
-                                networkdomainid, None, None, None, None, None)
+            networkdomainid = DimensionDataNetworkDomain(networkdomainid, None, None, None, None, None)
         vlans = client.node.ex_list_vlans(
             location=datacenterid,
             network_domain=networkdomainid

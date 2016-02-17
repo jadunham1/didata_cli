@@ -27,8 +27,6 @@ def list_base_images(client, datacenterid):
             ))
             click.secho("Memory: {0}GB".format(image.extra['memoryGb']))
             click.secho("Location: {0}".format(image.extra['location'].id))
-
-
             click.secho("")
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
@@ -51,9 +49,6 @@ def list_customer_images(client, datacenterid):
             ))
             click.secho("Memory: {0}GB".format(image.extra['memoryGb']))
             click.secho("Location: {0}".format(image.extra['location'].id))
-
-
             click.secho("")
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
-
