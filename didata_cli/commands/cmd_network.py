@@ -1,6 +1,7 @@
 import click
 from didata_cli.cli import pass_client
 from libcloud.common.dimensiondata import DimensionDataAPIException, DimensionDataNetworkDomain
+from libcloud.common.dimensiondata import DimensionDataVlan
 from didata_cli.utils import handle_dd_api_exception
 
 
@@ -29,6 +30,37 @@ def list_vlans(client, datacenterid, networkdomainid):
             click.secho("IPv4 Range: {0}/{1}".format(vlan.private_ipv4_range_address, vlan.private_ipv4_range_size))
             click.secho("IPv6 Range: {0}/{1}".format(vlan.ipv6_range_address, vlan.ipv6_range_size))
             click.secho("")
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="Network domain to create VLAN under")
+@click.option('--name', required=True, type=click.UNPROCESSED, help="Name of the VLAN")
+@click.option('--baseIpv4Address', required=True, type=click.UNPROCESSED, help="Base IPv4 Address")
+@click.option('--description', type=click.UNPROCESSED, help="Description of the VLAN")
+@click.option('--prefixSize', type=click.UNPROCESSED, help="Prefix Size", default='24')
+@pass_client
+def create_vlan(client, networkdomainid, name, baseipv4address, description, prefixsize):
+    try:
+        networkdomainid = DimensionDataNetworkDomain(networkdomainid, None, None, None, None, None)
+        vlan = client.node.ex_create_vlan(networkdomainid, name, baseipv4address, description, prefixsize)
+        click.secho("Successfully created VLAN {0}".format(vlan.id), bold=True, fg='green')
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--vlanId', required=True, help="ID of the vlan to remove")
+@pass_client
+def delete_vlan(client, vlanid):
+    try:
+        client.node.ex_delete_vlan(
+            DimensionDataVlan(
+                vlanid, None, None, None, None, None, None, None, None, None, None, None
+            )
+        )
+        click.secho("Vlan {0} deleted.".format(vlanid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
