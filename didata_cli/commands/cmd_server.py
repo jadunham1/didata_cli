@@ -77,6 +77,40 @@ def create(client, name, description, imageid, autostart, administratorpassword,
 @cli.command()
 @click.option('--serverId', type=click.UNPROCESSED, help='The server ID to destroy')
 @click.option('--serverFilterIpv6', help='The filter for ipv6')
+@click.option('--ramInGB', required=True, help='Amount of RAM to change the server to', type=int)
+@pass_client
+def update_ram(client, serverid, serverfilteripv6, ramingb):
+    node = None
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    node = client.node.ex_get_node_by_id(serverid)
+    try:
+        client.node.ex_reconfigure_node(node, ramingb, None, None, None)
+        click.secho("Server {0} ram is being changed to {1}GB".format(serverid, ramingb), fg='green', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to destroy')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
+@click.option('--cpuCount', required=True, help='# of CPUs to change to', type=int)
+@pass_client
+def update_cpu_count(client, serverid, serverfilteripv6, cpucount):
+    node = None
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    node = client.node.ex_get_node_by_id(serverid)
+    try:
+        client.node.ex_reconfigure_node(node, None, cpucount, None, None)
+        click.secho("Server {0} CPU Count changing to {1}".format(serverid, cpucount), fg='green', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to destroy')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
 @pass_client
 def destroy(client, serverid, serverfilteripv6):
     node = None
