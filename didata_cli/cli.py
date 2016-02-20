@@ -12,9 +12,9 @@ class DiDataCLIClient(object):
     def __init__(self):
         self.verbose = False
 
-    def init_client(self, user, password, region=DEFAULT_REGION):
-        self.node = DimensionDataNodeDriver(user, password, region)
-        self.backup = DimensionDataBackupDriver(user, password, region)
+    def init_client(self, user, password, region):
+        self.node = DimensionDataNodeDriver(user, password, region=region)
+        self.backup = DimensionDataBackupDriver(user, password, region=region)
 
 pass_client = click.make_pass_decorator(DiDataCLIClient, ensure=True)
 cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__),
