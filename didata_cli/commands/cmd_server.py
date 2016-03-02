@@ -63,7 +63,7 @@ def list(client, datacenterid, networkdomainid, networkid,
 @click.option('--description', required=True, help="The description of the server")
 @click.option('--imageId', type=click.UNPROCESSED, required=True, help="The image id for the server")
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
-@click.option('--administratorPassword', required=True, type=click.UNPROCESSED, help="The administrator password")
+@click.option('--administratorPassword', type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
 @click.option('--vlanId', type=click.UNPROCESSED, help="The vlan Id to deploy on")
 @click.option('--primaryIpv4', help="The IPv4 Address for the hosts primary nic")
@@ -81,9 +81,8 @@ def create(client, name, description, imageid, autostart, administratorpassword,
         response = client.node.create_node(name, imageid, administratorpassword,
                                            description, ex_network_domain=networkdomainid, ex_primary_ipv4=primaryipv4,
                                            ex_vlan=vlanid, ex_is_started=autostart,
-        #                                   ex_additional_nics_ipv4=additionalipv4,
+                                           ex_additional_nics_ipv4=additionalipv4,
                                            ex_additional_nics_vlan=additionalvlan)
-        print("what about here")
         click.secho("Node starting up: {0}.  IPv6: {1}".format(response.id, response.extra['ipv6']),
                     fg='green', bold=True)
     except DimensionDataAPIException as e:
