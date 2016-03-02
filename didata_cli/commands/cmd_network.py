@@ -51,7 +51,7 @@ def create_vlan(client, networkdomainid, name, baseipv4address, description, pre
 
 
 @cli.command()
-@click.option('--vlanId', required=True, help="ID of the vlan to remove")
+@click.option('--vlanId', type=click.UNPROCESSED, required=True, help="ID of the vlan to remove")
 @pass_client
 def delete_vlan(client, vlanid):
     try:
@@ -98,7 +98,7 @@ def create_network_domain(client, datacenterid, name, serviceplan, description):
 
 
 @cli.command()
-@click.option('--networkDomainId', required=True, help="ID of the network domain to remove")
+@click.option('--networkDomainId', type=click.UNPROCESSED, required=True, help="ID of the network domain to remove")
 @pass_client
 def delete_network_domain(client, networkdomainid):
     try:
@@ -143,7 +143,7 @@ def list_networks(client, datacenterid):
 
 
 @cli.command()
-@click.option('--networkId', required=True, help="ID of the network to remove")
+@click.option('--networkId', type=click.UNPROCESSED, required=True, help="ID of the network to remove")
 @pass_client
 def delete_network(client, networkid):
     try:

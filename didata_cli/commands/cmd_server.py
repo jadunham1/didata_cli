@@ -12,10 +12,10 @@ def cli(client):
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
-@click.option('--networkDomainId', help="Filter by network domain Id")
-@click.option('--networkId', help="Filter by network id")
-@click.option('--vlanId', help="Filter by vlan id")
-@click.option('--sourceImageId', help="Filter by source image id")
+@click.option('--networkDomainId', type=click.UNPROCESSED, help="Filter by network domain Id")
+@click.option('--networkId', type=click.UNPROCESSED, help="Filter by network id")
+@click.option('--vlanId', type=click.UNPROCESSED, help="Filter by vlan id")
+@click.option('--sourceImageId', type=click.UNPROCESSED, help="Filter by source image id")
 @click.option('--deployed', help="Filter by deployed state")
 @click.option('--name', help="Filter by server name")
 @click.option('--state', help="Filter by state")
@@ -61,17 +61,29 @@ def list(client, datacenterid, networkdomainid, networkid,
 @cli.command()
 @click.option('--name', required=True, help="The name of the server")
 @click.option('--description', required=True, help="The description of the server")
-@click.option('--imageId', required=True, help="The image id for the server")
+@click.option('--imageId', type=click.UNPROCESSED, required=True, help="The image id for the server")
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
 @click.option('--administratorPassword', required=True, type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
-@click.option('--vlanId', required=True, help="The vlan Id to deploy on")
+@click.option('--vlanId', type=click.UNPROCESSED, help="The vlan Id to deploy on")
+@click.option('--primaryIpv4', help="The IPv4 Address for the hosts primary nic")
+@click.option('--additionalVlan', help="Addtional nic on a specific VLAN", multiple=True)
+@click.option('--additionalIPv4', help="Addtional nic with a specific IPv4 Address", multiple=True)
 @pass_client
-def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
+def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid, primaryipv4, additionalvlan, additionalipv4):
     try:
+        # libcloud takes either None or a Tuple/List
+        # Click multiples get initialed as tuples so if they are empty we should make them null
+        if not additionalvlan:
+            additionalvlan = None
+        if not additionalipv4:
+            additionalipv4 = None
         response = client.node.create_node(name, imageid, administratorpassword,
-                                           description, ex_network_domain=networkdomainid,
-                                           ex_vlan=vlanid, ex_is_started=autostart)
+                                           description, ex_network_domain=networkdomainid, ex_primary_ipv4=primaryipv4,
+                                           ex_vlan=vlanid, ex_is_started=autostart,
+        #                                   ex_additional_nics_ipv4=additionalipv4,
+                                           ex_additional_nics_vlan=additionalvlan)
+        print("what about here")
         click.secho("Node starting up: {0}.  IPv6: {1}".format(response.id, response.extra['ipv6']),
                     fg='green', bold=True)
     except DimensionDataAPIException as e:
