@@ -1,6 +1,6 @@
 import click
 from didata_cli.cli import pass_client
-from libcloud.common.dimensiondata import DimensionDataAPIException
+from libcloud.common.dimensiondata import DimensionDataServerCpuSpecification, DimensionDataAPIException
 from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
 
 
@@ -65,12 +65,16 @@ def list(client, datacenterid, networkdomainid, networkid,
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
 @click.option('--administratorPassword', type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
+@click.option('--memoryInGb', help="The memory for the template in GB")
+@click.option('--cpuCount', help="CPU Count")
+@click.option('--cpuCoresPerSocket', help="CPU Cores Per Socket")
+@click.option('--cpuPerformance', help="CPU Performance")
 @click.option('--vlanId', type=click.UNPROCESSED, help="The vlan Id to deploy on")
 @click.option('--primaryIpv4', help="The IPv4 Address for the hosts primary nic")
 @click.option('--additionalVlan', help="Addtional nic on a specific VLAN", multiple=True)
 @click.option('--additionalIPv4', help="Addtional nic with a specific IPv4 Address", multiple=True)
 @pass_client
-def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid, primaryipv4, additionalvlan, additionalipv4):
+def create(client, name, description, imageid, autostart, administratorpassword, memoryingb, cpucount, cpuperformance, cpucorespersocket, networkdomainid, vlanid, primaryipv4, additionalvlan, additionalipv4):
     try:
         # libcloud takes either None or a Tuple/List
         # Click multiples get initialed as tuples so if they are empty we should make them null
@@ -78,11 +82,17 @@ def create(client, name, description, imageid, autostart, administratorpassword,
             additionalvlan = None
         if not additionalipv4:
             additionalipv4 = None
+        cpu = None
+        if cpucount is not None and cpuperformance is not None and cpucorespersocket is not None:
+            cpu = DimensionDataServerCpuSpecification(cpu_count=int(cpucount), cores_per_socket=int(cpucorespersocket), performance=cpuperformance)
         response = client.node.create_node(name, imageid, administratorpassword,
                                            description, ex_network_domain=networkdomainid, ex_primary_ipv4=primaryipv4,
                                            ex_vlan=vlanid, ex_is_started=autostart,
                                            ex_additional_nics_ipv4=additionalipv4,
-                                           ex_additional_nics_vlan=additionalvlan)
+                                           ex_additional_nics_vlan=additionalvlan,
+                                           ex_cpu_specification=cpu,
+                                           ex_memory_gb=memoryingb
+                                           )
         click.secho("Node starting up: {0}.  IPv6: {1}".format(response.id, response.extra['ipv6']),
                     fg='green', bold=True)
     except DimensionDataAPIException as e:
