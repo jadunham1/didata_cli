@@ -9,6 +9,7 @@ from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_
 def cli(client):
     pass
 
+
 @cli.command()
 @click.option('--serverId', required=True, help="The sever ID to get info for")
 @pass_client
