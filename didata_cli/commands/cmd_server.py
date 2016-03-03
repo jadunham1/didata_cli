@@ -9,6 +9,30 @@ from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_
 def cli(client):
     pass
 
+@cli.command()
+@click.option('--serverId', required=True, help="The sever ID to get info for")
+@pass_client
+def info(client, serverid):
+    node = client.node.ex_get_node_by_id(serverid)
+    click.secho("{0}".format(node.name), bold=True)
+    click.secho("ID: {0}".format(node.id))
+    click.secho("Datacenter: {0}".format(node.extra['datacenterId']))
+    click.secho("OS: {0}".format(node.extra['OS_displayName']))
+    click.secho("Private IPv4: {0}".format(" - ".join(node.private_ips)))
+    if 'ipv6' in node.extra:
+        click.secho("Private IPv6: {0}".format(node.extra['ipv6']))
+    click.secho("Public IPs: {0}".format(" - ".join(node.public_ips)))
+    click.secho("State: {0}".format(node.state))
+    for key in sorted(node.extra):
+        if key == 'cpu':
+            click.echo("CPU Count: {0}".format(node.extra[key].cpu_count))
+            click.echo("Cores per Socket: {0}".format(node.extra[key].cores_per_socket))
+            click.echo("CPU Performance: {0}".format(node.extra[key].performance))
+            continue
+        if key not in ['datacenterId', 'OS_displayName']:
+            click.echo("{0}: {1}".format(key, node.extra[key]))
+    click.secho("")
+
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
