@@ -10,6 +10,35 @@ def cli(client):
     pass
 
 
+def _print_node_info(node):
+    click.secho("{0}".format(node.name), bold=True)
+    click.secho("ID: {0}".format(node.id))
+    click.secho("Datacenter: {0}".format(node.extra['datacenterId']))
+    click.secho("OS: {0}".format(node.extra['OS_displayName']))
+    click.secho("Private IPv4: {0}".format(" - ".join(node.private_ips)))
+    if 'ipv6' in node.extra:
+        click.secho("Private IPv6: {0}".format(node.extra['ipv6']))
+    click.secho("Public IPs: {0}".format(" - ".join(node.public_ips)))
+    click.secho("State: {0}".format(node.state))
+    for key in sorted(node.extra):
+        if key == 'cpu':
+            click.echo("CPU Count: {0}".format(node.extra[key].cpu_count))
+            click.echo("Cores per Socket: {0}".format(node.extra[key].cores_per_socket))
+            click.echo("CPU Performance: {0}".format(node.extra[key].performance))
+            continue
+        if key not in ['datacenterId', 'OS_displayName']:
+            click.echo("{0}: {1}".format(key, node.extra[key]))
+    click.secho("")
+
+
+@cli.command()
+@click.option('--serverId', required=True, help="The server ID to get info for")
+@pass_client
+def info(client, serverid):
+    node = client.node.ex_get_node_by_id(serverid)
+    _print_node_info(node)
+
+
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
 @click.option('--networkDomainId', help="Filter by network domain Id")
@@ -23,35 +52,21 @@ def cli(client):
 @click.option('--ipv6', help="Filter by ipv6")
 @click.option('--privateIpv4', help="Filter by private ipv4")
 @click.option('--dumpall', is_flag=True, default=False, help="Dump all attributes about the server")
+@click.option('--idsonly', is_flag=True, default=False, help="Only dump server ids")
 @pass_client
 def list(client, datacenterid, networkdomainid, networkid,
          vlanid, sourceimageid, deployed, name,
          state, started,
-         ipv6, privateipv4, dumpall):
+         ipv6, privateipv4, dumpall, idsonly):
     node_list = client.node.list_nodes(ex_location=datacenterid, ex_name=name, ex_network=networkid,
                                        ex_network_domain=networkdomainid, ex_vlan=vlanid,
                                        ex_image=sourceimageid, ex_deployed=deployed, ex_started=started,
                                        ex_state=state, ex_ipv6=ipv6, ex_ipv4=privateipv4)
     for node in node_list:
-        click.secho("{0}".format(node.name), bold=True)
-        click.secho("ID: {0}".format(node.id))
-        click.secho("Datacenter: {0}".format(node.extra['datacenterId']))
-        click.secho("OS: {0}".format(node.extra['OS_displayName']))
-        click.secho("Private IPv4: {0}".format(" - ".join(node.private_ips)))
-        if 'ipv6' in node.extra:
-            click.secho("Private IPv6: {0}".format(node.extra['ipv6']))
-        if dumpall:
-            click.secho("Public IPs: {0}".format(" - ".join(node.public_ips)))
-            click.secho("State: {0}".format(node.state))
-            for key in sorted(node.extra):
-                if key == 'cpu':
-                    click.echo("CPU Count: {0}".format(node.extra[key].cpu_count))
-                    click.echo("Cores per Socket: {0}".format(node.extra[key].cores_per_socket))
-                    click.echo("CPU Performance: {0}".format(node.extra[key].performance))
-                    continue
-                if key not in ['datacenterId', 'status', 'OS_displayName']:
-                    click.echo("{0}: {1}".format(key, node.extra[key]))
-        click.secho("")
+        if idsonly:
+            click.secho(node.id)
+        else:
+            _print_node_info(node)
 
 
 @cli.command()
