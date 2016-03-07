@@ -32,7 +32,7 @@ def _print_node_info(node):
 
 
 @cli.command()
-@click.option('--serverId', required=True, help="The sever ID to get info for")
+@click.option('--serverId', required=True, help="The server ID to get info for")
 @pass_client
 def info(client, serverid):
     node = client.node.ex_get_node_by_id(serverid)
