@@ -157,10 +157,10 @@ def delete_network(client, networkid):
 
 @cli.command()
 @click.option('--name', required=True, help="Name for the rule")
-@click.option('--action', required=True, help="ACCEPT_DECISIVELY or DROP")
+@click.option('--action', required=True, type=click.Choice(['ACCEPT_DECISIVELY', 'DROP']))
 @click.option('--networkId', required=True, help="The network domain to apply the rule to")
-@click.option('--ipVersion', required=True, help="IPV4 or IPV6")
-@click.option('--protocol', required=True, help="IP, ICMP, TCP, or UDP")
+@click.option('--ipVersion', required=True, type=click.Choice(['IPV4', 'IPV6']))
+@click.option('--protocol', required=True, type=click.Choice(['IP', 'ICMP', 'TCP', 'UDP']))
 @click.option('--sourceIP', required=True, help="ANY or valid IPv4/IPv6 address")
 @click.option('--sourceIP_prefix_size', required=False, help="Only required if specify a range of hosts, e.g. 24")
 @click.option('--sourceStartPort', required=True,
@@ -171,7 +171,7 @@ def delete_network(client, networkid):
 @click.option('--destinationStartPort', required=True,
               help="ANY or port number. If ANY or single port, endport not required")
 @click.option('--destinationEndPort', required=False, help="Port number, required only for port range", default=None)
-@click.option('--position', required=True, help="FIRST or LAST")
+@click.option('--position', required=True, type=click.Choice(['FIRST', 'LAST']))
 @pass_client
 def create_firewall_rule(client, name, action, networkid, ipversion, protocol, sourceip, sourceip_prefix_size,
                          sourcestartport, sourceendport, destinationip, destinationip_prefix_size, destinationstartport,
@@ -202,8 +202,8 @@ def list_firewall_rules(client, networkid):
         networkDomain = client.node.ex_get_network_domain(networkid)
         rules = client.node.ex_list_firewall_rules(networkDomain)
         for rule in rules:
-            source_location = ParseLocation(rule.source)
-            dest_location = ParseLocation(rule.destination)
+            source_location = ParseNetworkLocation(rule.source)
+            dest_location = ParseNetworkLocation(rule.destination)
             click.secho("{0}".format(rule.name), bold=True)
             click.secho("Status: {0}".format(rule.status))
             click.secho("ID: {0}".format(rule.id))
@@ -211,8 +211,8 @@ def list_firewall_rules(client, networkid):
             click.secho("Action: {0}".format(rule.action))
             click.secho("IP Version: {0}".format(rule.ip_version))
             click.secho("Protocol: {0}".format(rule.protocol))
-            click.secho("Source: IP:{0}, Ports:{1}".format(source_location.ip, source_location.ports))
-            click.secho("Destination: IP:{0}, Ports:{1}".format(dest_location.ip, dest_location.ports))
+            click.secho("Source: IP: {0}, Ports: {1}".format(source_location.ip, source_location.ports))
+            click.secho("Destination: IP: {0}, Ports: {1}".format(dest_location.ip, dest_location.ports))
             click.secho("")
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
@@ -232,7 +232,7 @@ def delete_firewall_rule(client, networkid, ruleid):
         handle_dd_api_exception(e)
 
 
-class ParseLocation(object):
+class ParseNetworkLocation(object):
 
     def __init__(self, location):
         self._location = location
