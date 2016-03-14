@@ -76,7 +76,7 @@ def list(client, datacenterid, networkdomainid, networkid,
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
 @click.option('--administratorPassword', required=True, type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
-@click.option('--vlanId', required=True, help="The vlan Id to deploy on")
+@click.option('--vlanId', required=True, type=click.UNPROCESSED, help="The vlan Id to deploy on")
 @pass_client
 def create(client, name, description, imageid, autostart, administratorpassword, networkdomainid, vlanid):
     try:
