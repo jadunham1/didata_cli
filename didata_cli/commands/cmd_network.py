@@ -154,6 +154,7 @@ def delete_network(client, networkid):
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
+
 @cli.command()
 @click.option('--name', required=True, help="Name for the rule")
 @click.option('--action', required=True, help="ACCEPT_DECISIVELY or DROP")
@@ -162,11 +163,13 @@ def delete_network(client, networkid):
 @click.option('--protocol', required=True, help="IP, ICMP, TCP, or UDP")
 @click.option('--sourceIP', required=True, help="ANY or valid IPv4/IPv6 address")
 @click.option('--sourceIP_prefix_size', required=False, help="Only required if specify a range of hosts, e.g. 24")
-@click.option('--sourceStartPort', required=True, help="ANY or port number. If ANY or single port, endport not required")
+@click.option('--sourceStartPort', required=True,
+              help="ANY or port number. If ANY or single port, endport not required")
 @click.option('--sourceEndPort', required=False, help="Port number, required only for port range", default=None)
 @click.option('--destinationIP', required=True, help="ANY or valid IPv4/IPv6 address")
 @click.option('--destinationIP_prefix_size', required=False, help="Only required if specify a range of hosts, e.g. 24")
-@click.option('--destinationStartPort', required=True, help="ANY or port number. If ANY or single port, endport not required")
+@click.option('--destinationStartPort', required=True,
+              help="ANY or port number. If ANY or single port, endport not required")
 @click.option('--destinationEndPort', required=False, help="Port number, required only for port range", default=None)
 @click.option('--position', required=True, help="FIRST or LAST")
 @pass_client
@@ -179,15 +182,17 @@ def create_firewall_rule(client, name, action, networkid, ipversion, protocol, s
         dest_any = True if destinationip == 'ANY' else False
         source_address = DimensionDataFirewallAddress(source_any, sourceip, sourceip_prefix_size, sourcestartport,
                                                       sourceendport)
-        dest_address = DimensionDataFirewallAddress(dest_any, destinationip, destinationip_prefix_size, destinationstartport,
-                                                    destinationendport)
+        dest_address = DimensionDataFirewallAddress(dest_any, destinationip, destinationip_prefix_size,
+                                                    destinationstartport, destinationendport)
         rule = DimensionDataFirewallRule(id=None, name=name, action=action, location=network_domain.location,
                                          network_domain=network_domain, status=None, ip_version=ipversion,
-                                         protocol=protocol, source=source_address, destination=dest_address, enabled=True)
+                                         protocol=protocol, source=source_address, destination=dest_address,
+                                         enabled=True)
         client.node.ex_create_firewall_rule(network_domain, rule, position)
         click.secho("Firewall rule {0} created in {1}".format(name, network_domain.name), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
 
 @cli.command()
 @click.option('--networkId', required=True, help="Network Domain ID where the rules live")
