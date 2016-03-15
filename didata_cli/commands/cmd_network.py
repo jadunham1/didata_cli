@@ -53,7 +53,7 @@ def create_vlan(client, networkdomainid, name, baseipv4address, description, pre
 
 
 @cli.command()
-@click.option('--vlanId', required=True, help="ID of the vlan to remove")
+@click.option('--vlanId', type=click.UNPROCESSED, required=True, help="ID of the vlan to remove")
 @pass_client
 def delete_vlan(client, vlanid):
     try:
@@ -100,7 +100,7 @@ def create_network_domain(client, datacenterid, name, serviceplan, description):
 
 
 @cli.command()
-@click.option('--networkDomainId', required=True, help="ID of the network domain to remove")
+@click.option('--networkDomainId', type=click.UNPROCESSED, required=True, help="ID of the network domain to remove")
 @pass_client
 def delete_network_domain(client, networkdomainid):
     try:
@@ -145,7 +145,7 @@ def list_networks(client, datacenterid):
 
 
 @cli.command()
-@click.option('--networkId', required=True, help="ID of the network to remove")
+@click.option('--networkId', type=click.UNPROCESSED, required=True, help="ID of the network to remove")
 @pass_client
 def delete_network(client, networkid):
     try:
@@ -158,7 +158,7 @@ def delete_network(client, networkid):
 @cli.command()
 @click.option('--name', required=True, help="Name for the rule")
 @click.option('--action', required=True, type=click.Choice(['ACCEPT_DECISIVELY', 'DROP']))
-@click.option('--networkId', required=True, help="The network domain to apply the rule to")
+@click.option('--networkId', type=click.UNPROCESSED, required=True, help="The network domain to apply the rule to")
 @click.option('--ipVersion', required=True, type=click.Choice(['IPV4', 'IPV6']))
 @click.option('--protocol', required=True, type=click.Choice(['IP', 'ICMP', 'TCP', 'UDP']))
 @click.option('--sourceIP', required=True, help="ANY or valid IPv4/IPv6 address")
@@ -195,7 +195,7 @@ def create_firewall_rule(client, name, action, networkid, ipversion, protocol, s
 
 
 @cli.command()
-@click.option('--networkId', required=True, help="Network Domain ID where the rules live")
+@click.option('--networkId', type=click.UNPROCESSED, required=True, help="Network Domain ID where the rules live")
 @pass_client
 def list_firewall_rules(client, networkid):
     try:
@@ -219,8 +219,8 @@ def list_firewall_rules(client, networkid):
 
 
 @cli.command()
-@click.option('--networkId', required=True, help="ID of the network where the firewall rule lives")
-@click.option('--ruleId', required=True, help="ID of the fireall rule to remove")
+@click.option('--networkId', type=click.UNPROCESSED, required=True, help="Network ID where the firewall rule lives")
+@click.option('--ruleId', type=click.UNPROCESSED, required=True, help="ID of the fireall rule to remove")
 @pass_client
 def delete_firewall_rule(client, networkid, ruleid):
     try:
