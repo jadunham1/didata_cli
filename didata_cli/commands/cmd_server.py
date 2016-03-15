@@ -77,7 +77,7 @@ def list(client, datacenterid, networkdomainid, networkid,
 @cli.command()
 @click.option('--name', required=True, help="The name of the server")
 @click.option('--description', required=True, help="The description of the server")
-@click.option('--imageId', required=True, help="The image id for the server")
+@click.option('--imageId', required=True, type=click.UNPROCESSED, help="The image id for the server")
 @click.option('--autostart', is_flag=True, default=False, help="Bool flag for if you want to autostart")
 @click.option('--administratorPassword', required=True, type=click.UNPROCESSED, help="The administrator password")
 @click.option('--networkDomainId', required=True, type=click.UNPROCESSED, help="The network domain Id to deploy on")
