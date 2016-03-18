@@ -238,8 +238,9 @@ def delete_firewall_rule(client, networkid, ruleid):
 def add_public_ip_block(client, networkid):
     try:
         networkDomain = client.node.ex_get_network_domain(networkid)
-        client.node.ex_add_public_ip_block_to_network_domain(networkDomain)
-        click.secho("Public IP Block added to {0}".format(networkid), fg='green', bold=True)
+        ip_block = client.node.ex_add_public_ip_block_to_network_domain(networkDomain)
+        click.secho("Public IP Block with base IP of {0} and block size of {1} added to {2}".format(ip_block.base_ip,
+                    ip_block.size, networkid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
