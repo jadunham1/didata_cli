@@ -158,7 +158,8 @@ def delete_network(client, networkid):
 @cli.command()
 @click.option('--name', required=True, help="Name for the rule")
 @click.option('--action', required=True, type=click.Choice(['ACCEPT_DECISIVELY', 'DROP']))
-@click.option('--networkId', type=click.UNPROCESSED, required=True, help="The network domain to apply the rule to")
+@click.option('--networkDomainId', type=click.UNPROCESSED, required=True,
+              help="The network domain to apply the rule to")
 @click.option('--ipVersion', required=True, type=click.Choice(['IPV4', 'IPV6']))
 @click.option('--protocol', required=True, type=click.Choice(['IP', 'ICMP', 'TCP', 'UDP']))
 @click.option('--sourceIP', required=True, help="ANY or valid IPv4/IPv6 address")
@@ -173,11 +174,11 @@ def delete_network(client, networkid):
 @click.option('--destinationEndPort', required=False, help="Port number, required only for port range", default=None)
 @click.option('--position', required=True, type=click.Choice(['FIRST', 'LAST']))
 @pass_client
-def create_firewall_rule(client, name, action, networkid, ipversion, protocol, sourceip, sourceip_prefix_size,
+def create_firewall_rule(client, name, action, networkdomainid, ipversion, protocol, sourceip, sourceip_prefix_size,
                          sourcestartport, sourceendport, destinationip, destinationip_prefix_size, destinationstartport,
                          destinationendport, position):
     try:
-        network_domain = client.node.ex_get_network_domain(networkid)
+        network_domain = client.node.ex_get_network_domain(networkdomainid)
         source_any = True if sourceip == 'ANY' else False
         dest_any = True if destinationip == 'ANY' else False
         source_address = DimensionDataFirewallAddress(source_any, sourceip, sourceip_prefix_size, sourcestartport,
@@ -195,12 +196,12 @@ def create_firewall_rule(client, name, action, networkid, ipversion, protocol, s
 
 
 @cli.command()
-@click.option('--networkId', type=click.UNPROCESSED, required=True, help="Network Domain ID where the rules live")
+@click.option('--networkDomainId', type=click.UNPROCESSED, required=True, help="Network Domain ID where the rules live")
 @pass_client
-def list_firewall_rules(client, networkid):
+def list_firewall_rules(client, networkdomainid):
     try:
-        networkDomain = client.node.ex_get_network_domain(networkid)
-        rules = client.node.ex_list_firewall_rules(networkDomain)
+        network_domain = client.node.ex_get_network_domain(networkdomainid)
+        rules = client.node.ex_list_firewall_rules(network_domain)
         for rule in rules:
             source_location = ParseNetworkLocation(rule.source)
             dest_location = ParseNetworkLocation(rule.destination)
@@ -219,13 +220,14 @@ def list_firewall_rules(client, networkid):
 
 
 @cli.command()
-@click.option('--networkId', type=click.UNPROCESSED, required=True, help="Network ID where the firewall rule lives")
+@click.option('--networkDomainId', type=click.UNPROCESSED, required=True,
+              help="Network ID where the firewall rule lives")
 @click.option('--ruleId', type=click.UNPROCESSED, required=True, help="ID of the fireall rule to remove")
 @pass_client
-def delete_firewall_rule(client, networkid, ruleid):
+def delete_firewall_rule(client, networkdomainid, ruleid):
     try:
-        networkDomain = client.node.ex_get_network_domain(networkid)
-        rule = client.node.ex_get_firewall_rule(networkDomain, ruleid)
+        network_domain = client.node.ex_get_network_domain(networkdomainid)
+        rule = client.node.ex_get_firewall_rule(network_domain, ruleid)
         client.node.ex_delete_firewall_rule(rule)
         click.secho("Firewall rule {0} deleted.".format(ruleid), fg='green', bold=True)
     except DimensionDataAPIException as e:
@@ -233,25 +235,26 @@ def delete_firewall_rule(client, networkid, ruleid):
 
 
 @cli.command()
-@click.option('--networkId', required=True, type=click.UNPROCESSED, help="ID of the network to add the public IP block")
+@click.option('--networkDomainId', required=True, type=click.UNPROCESSED,
+              help="ID of the network to add the public IP block")
 @pass_client
-def add_public_ip_block(client, networkid):
+def add_public_ip_block(client, networkdomainid):
     try:
-        networkDomain = client.node.ex_get_network_domain(networkid)
-        ip_block = client.node.ex_add_public_ip_block_to_network_domain(networkDomain)
+        network_domain = client.node.ex_get_network_domain(networkdomainid)
+        ip_block = client.node.ex_add_public_ip_block_to_network_domain(network_domain)
         click.secho("Public IP Block with base IP of {0} and block size of {1} added to {2}".format(ip_block.base_ip,
-                    ip_block.size, networkid), fg='green', bold=True)
+                    ip_block.size, networkdomainid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
 
 @cli.command()
-@click.option('--networkId', type=click.UNPROCESSED, help="ID of the network to list public IP blocks")
+@click.option('--networkDomainId', type=click.UNPROCESSED, help="ID of the network to list public IP blocks")
 @pass_client
-def list_public_ip_blocks(client, networkid):
+def list_public_ip_blocks(client, networkdomainid):
     try:
-        networkDomain = client.node.ex_get_network_domain(networkid)
-        ip_blocks = client.node.ex_list_public_ip_blocks(networkDomain)
+        network_domain = client.node.ex_get_network_domain(networkdomainid)
+        ip_blocks = client.node.ex_list_public_ip_blocks(network_domain)
         for ip_block in ip_blocks:
             click.secho("ID: {0}".format(ip_block.id), bold=True)
             click.secho("Base IP: {0}".format(ip_block.base_ip))
