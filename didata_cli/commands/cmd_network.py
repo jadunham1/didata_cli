@@ -119,9 +119,9 @@ def delete_network_domain(client, networkdomainid):
 @click.option('--name', required=True, help="Name for the network")
 @click.option('--servicePlan', required=True, help="Service plan")
 @pass_client
-def create_network(client, datacenterid, name):
+def create_network(client, datacenterid, name, serviceplan):
     try:
-        client.node.ex_create_network(datacenterid, name)
+        client.node.ex_create_network(datacenterid, name, serviceplan)
         click.secho("Network {0} created in {1}".format(name, datacenterid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
@@ -150,7 +150,7 @@ def list_networks(client, datacenterid):
 def delete_network(client, networkid):
     try:
         client.node.ex_delete_network(networkid)
-        click.secho("Network {0} deleted.".format(id), fg='green', bold=True)
+        click.secho("Network {0} deleted.".format(networkid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
