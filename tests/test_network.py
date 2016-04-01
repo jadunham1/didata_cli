@@ -31,7 +31,6 @@ class DimensionDataCLITestCase(unittest.TestCase):
         node_client.return_value.ex_list_vlans.return_value = load_dd_obj('vlan_list.json')
         result = self.runner.invoke(cli, ['network', 'list_vlans', '--networkDomainId',
                                           '4b58cd5-4968-4b84-ac4c-007a5c1dd6f5'])
-        print(result.output)
         self.assertTrue('ID: 56389c71-cc03-4e7a-a72f-cc219f0649c8' in result.output)
         self.assertEqual(result.exit_code, 0)
 
