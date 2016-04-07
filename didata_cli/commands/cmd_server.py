@@ -264,4 +264,3 @@ def _node_to_dict(node):
             continue
         node_dict[key] = node.extra[key]
     return node_dict
-
