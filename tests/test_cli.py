@@ -8,6 +8,7 @@ except:
 import os
 from tests.utils import load_dd_obj
 from libcloud.common.dimensiondata import DimensionDataAPIException
+import json
 
 
 @patch('didata_cli.cli.DimensionDataNodeDriver')
@@ -26,6 +27,25 @@ class DimensionDataCLITestCase(unittest.TestCase):
         result = self.runner.invoke(cli, ['server', 'list'])
         self.assertTrue('Private IPv4: 172.16.2.8', result.output)
         self.assertEqual(result.exit_code, 0)
+
+    def test_server_list_json_output(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')
+        result = self.runner.invoke(cli, ['--outputType', 'json', 'server', 'list'])
+        json.loads(result.output)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_server_list_query(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')
+        result = self.runner.invoke(cli, ['server', 'list', '--query', 'ReturnCount:1|ReturnKeys:ID'])
+        self.assertEqual(result.exit_code, 0)
+        output = os.linesep.join([s for s in result.output.splitlines() if s])
+        self.assertEqual(output, 'ID: b4ea8995-43a1-4b56-b751-4107b5671713')
+
+    def test_server_list_empty(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('node_list_empty.json')
+        result = self.runner.invoke(cli, ['server', 'list'])
+        self.assertEqual(result.exit_code, 0)
+        self.assertTrue('No nodes found', result.output)
 
     def test_server_list_idsonly(self, node_client):
         node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')

@@ -4,7 +4,9 @@ from libcloud.common.dimensiondata import DimensionDataAPIException, DimensionDa
 from libcloud.common.dimensiondata import DimensionDataVlan
 from libcloud.common.dimensiondata import DimensionDataFirewallRule
 from libcloud.common.dimensiondata import DimensionDataFirewallAddress
+from didata_cli.filterable_response import DiDataCLIFilterableResponse
 from didata_cli.utils import handle_dd_api_exception
+from collections import OrderedDict
 
 
 @click.group()
@@ -13,11 +15,66 @@ def cli(client):
     pass
 
 
+def _vlan_to_dict(vlan):
+    vlan_dict = OrderedDict()
+    vlan_dict['Name'] = vlan.name
+    vlan_dict['ID'] = vlan.id
+    vlan_dict['Description'] = vlan.description
+    vlan_dict['Network Domain ID'] = vlan.network_domain.id
+    vlan_dict['Status'] = vlan.status
+    vlan_dict['IPv4 Range Address'] = vlan.private_ipv4_range_address
+    vlan_dict['IPv4 Range Size'] = vlan.private_ipv4_range_size
+    vlan_dict['IPv6 Range Address'] = vlan.ipv6_range_address
+    vlan_dict['IPv6 Range Size'] = vlan.ipv6_range_size
+    return vlan_dict
+
+
+def _network_domain_to_dict(network_domain):
+    network_domain_dict = OrderedDict()
+    network_domain_dict['Name'] = network_domain.name
+    network_domain_dict['ID'] = network_domain.id
+    network_domain_dict['Description'] = network_domain.description
+    network_domain_dict['Location'] = network_domain.location.id
+    network_domain_dict['Status'] = network_domain.status
+    network_domain_dict['Plan'] = network_domain.plan
+    return network_domain_dict
+
+
+def _firewall_rule_to_dict(firewall_rule):
+    print("here")
+    source_location = ParseNetworkLocation(firewall_rule.source)
+    dest_location = ParseNetworkLocation(firewall_rule.destination)
+    firewall_rule_dict = OrderedDict()
+    firewall_rule_dict['Name'] = firewall_rule.name
+    firewall_rule_dict['ID'] = firewall_rule.id
+    firewall_rule_dict['Protocol'] = firewall_rule.protocol
+    firewall_rule_dict['IP Version'] = firewall_rule.ip_version
+    firewall_rule_dict['Source IP'] = source_location.ip
+    firewall_rule_dict['Source Ports'] = source_location.ports
+    firewall_rule_dict['Destination IP'] = dest_location.ip
+    firewall_rule_dict['Destination Ports'] = dest_location.ports
+    firewall_rule_dict['Action'] = firewall_rule.action
+    firewall_rule_dict['Status'] = firewall_rule.status
+    firewall_rule_dict['Enabled'] = firewall_rule.enabled
+    firewall_rule_dict['Location'] = firewall_rule.location.id
+    return firewall_rule_dict
+
+
+def _ip_block_to_dict(ip_block):
+    ip_block_dict = OrderedDict()
+    ip_block_dict['ID'] = ip_block.id
+    ip_block_dict['Base IP'] = ip_block.base_ip
+    ip_block_dict['Block Size'] = ip_block.size
+    ip_block_dict['Status'] = ip_block.status
+    return ip_block_dict
+
+
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
 @click.option('--networkDomainId', type=click.UNPROCESSED, help="Filter by network domain")
+@click.option('--query', help="Query to pass to processing before outputting vlans")
 @pass_client
-def list_vlans(client, datacenterid, networkdomainid):
+def list_vlans(client, datacenterid, networkdomainid, query):
     try:
         if networkdomainid is not None:
             networkdomainid = DimensionDataNetworkDomain(networkdomainid, None, None, None, None, None)
@@ -25,13 +82,15 @@ def list_vlans(client, datacenterid, networkdomainid):
             location=datacenterid,
             network_domain=networkdomainid
         )
+        response = DiDataCLIFilterableResponse()
         for vlan in vlans:
-            click.secho("{0}".format(vlan.name), bold=True)
-            click.secho("ID: {0}".format(vlan.id))
-            click.secho("Description: {0}".format(vlan.description))
-            click.secho("IPv4 Range: {0}/{1}".format(vlan.private_ipv4_range_address, vlan.private_ipv4_range_size))
-            click.secho("IPv6 Range: {0}/{1}".format(vlan.ipv6_range_address, vlan.ipv6_range_size))
-            click.secho("")
+            response.add(_vlan_to_dict(vlan))
+        if not response.is_empty():
+            if query is not None:
+                response.do_filter(query)
+            click.secho(response.to_string(client.output_type))
+        else:
+            click.secho("No vlans found", fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -69,18 +128,20 @@ def delete_vlan(client, vlanid):
 
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
+@click.option('--query', help="Query to pass to processing before outputting network domains")
 @pass_client
-def list_network_domains(client, datacenterid):
+def list_network_domains(client, datacenterid, query):
     try:
         network_domains = client.node.ex_list_network_domains(location=datacenterid)
+        response = DiDataCLIFilterableResponse()
         for network_domain in network_domains:
-            click.secho("{0}".format(network_domain.name), bold=True)
-            click.secho("ID: {0}".format(network_domain.id))
-            click.secho("Description: {0}".format(network_domain.description))
-            click.secho("Plan: {0}".format(network_domain.plan))
-            click.secho("Location: {0}".format(network_domain.location.id))
-            click.secho("Status: {0}".format(network_domain.status))
-            click.secho("")
+            response.add(_network_domain_to_dict(network_domain))
+        if not response.is_empty():
+            if query is not None:
+                response.do_filter(query)
+            click.secho(response.to_string(client.output_type))
+        else:
+            click.secho("No network domains found", fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -197,24 +258,21 @@ def create_firewall_rule(client, name, action, networkdomainid, ipversion, proto
 
 @cli.command()
 @click.option('--networkDomainId', type=click.UNPROCESSED, required=True, help="Network Domain ID where the rules live")
+@click.option('--query', help="Query to pass to processing before outputting firewall rules")
 @pass_client
-def list_firewall_rules(client, networkdomainid):
+def list_firewall_rules(client, networkdomainid, query):
     try:
         network_domain = client.node.ex_get_network_domain(networkdomainid)
         rules = client.node.ex_list_firewall_rules(network_domain)
+        response = DiDataCLIFilterableResponse()
         for rule in rules:
-            source_location = ParseNetworkLocation(rule.source)
-            dest_location = ParseNetworkLocation(rule.destination)
-            click.secho("{0}".format(rule.name), bold=True)
-            click.secho("Status: {0}".format(rule.status))
-            click.secho("ID: {0}".format(rule.id))
-            click.secho("Enabled: {0}".format(rule.enabled))
-            click.secho("Action: {0}".format(rule.action))
-            click.secho("IP Version: {0}".format(rule.ip_version))
-            click.secho("Protocol: {0}".format(rule.protocol))
-            click.secho("Source: IP: {0}, Ports: {1}".format(source_location.ip, source_location.ports))
-            click.secho("Destination: IP: {0}, Ports: {1}".format(dest_location.ip, dest_location.ports))
-            click.secho("")
+            response.add(_firewall_rule_to_dict(rule))
+        if not response.is_empty():
+            if query is not None:
+                response.do_filter(query)
+            click.secho(response.to_string(client.output_type))
+        else:
+            click.secho("No firewall rules found", fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 
@@ -250,17 +308,21 @@ def add_public_ip_block(client, networkdomainid):
 
 @cli.command()
 @click.option('--networkDomainId', type=click.UNPROCESSED, help="ID of the network to list public IP blocks")
+@click.option('--query', help="Query to pass to processing before outputting public ip blocks")
 @pass_client
-def list_public_ip_blocks(client, networkdomainid):
+def list_public_ip_blocks(client, networkdomainid, query):
     try:
         network_domain = client.node.ex_get_network_domain(networkdomainid)
         ip_blocks = client.node.ex_list_public_ip_blocks(network_domain)
+        response = DiDataCLIFilterableResponse()
         for ip_block in ip_blocks:
-            click.secho("ID: {0}".format(ip_block.id), bold=True)
-            click.secho("Base IP: {0}".format(ip_block.base_ip))
-            click.secho("Block size: {0}".format(ip_block.size))
-            click.secho("Status: {0}".format(ip_block.status))
-            click.secho("")
+            response.add(_ip_block_to_dict(ip_block))
+        if not response.is_empty():
+            if query is not None:
+                response.do_filter(query)
+            click.secho(response.to_string(client.output_type))
+        else:
+            click.secho("No public ip blocks found", fg='red', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
 

@@ -1,7 +1,9 @@
 import click
 from didata_cli.cli import pass_client
+from didata_cli.filterable_response import DiDataCLIFilterableResponse
 from libcloud.common.dimensiondata import DimensionDataAPIException
 from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
+from collections import OrderedDict
 
 
 @click.group()
@@ -38,6 +40,34 @@ def _print_node_info(node):
     click.secho("")
 
 
+def _node_to_dict(node):
+    node_dict = OrderedDict()
+    node_dict['Name'] = node.name
+    node_dict['ID'] = node.id
+    ip_count = 0
+    for ip in node.private_ips:
+        node_dict['Private IPv4 ' + str(ip_count)] = ip
+    node_dict['State'] = node.state
+    for key in sorted(node.extra):
+        if key == 'cpu':
+            node_dict['CPU Count'] = node.extra[key].cpu_count
+            node_dict['Cores per Socket'] = node.extra[key].cores_per_socket
+            node_dict['CPU Performance'] = node.extra[key].performance
+            continue
+        if key == 'disks':
+            for disk in node.extra[key]:
+                node_dict['Disk ' + str(disk.scsi_id) + ' ID'] = disk.id
+                node_dict['Disk ' + str(disk.scsi_id) + ' Size'] = disk.size_gb
+                node_dict['Disk ' + str(disk.scsi_id) + ' Speed'] = disk.speed
+                node_dict['Disk ' + str(disk.scsi_id) + ' State'] = disk.state
+            continue
+        # skip this key, it is similar to node.status
+        if key == 'status':
+            continue
+        node_dict[key] = node.extra[key]
+    return node_dict
+
+
 @cli.command()
 @click.option('--serverId', required=True, help="The server ID to get info for")
 @pass_client
@@ -59,19 +89,27 @@ def info(client, serverid):
 @click.option('--ipv6', help="Filter by ipv6")
 @click.option('--privateIpv4', help="Filter by private ipv4")
 @click.option('--idsonly', is_flag=True, default=False, help="Only dump server ids")
+@click.option('--query', help="The query to pass to the printer")
 @pass_client
 def list(client, datacenterid, networkdomainid, networkid,
          vlanid, sourceimageid, deployed, name,
-         state, started, ipv6, privateipv4, idsonly):
+         state, started, ipv6, privateipv4, idsonly, query):
     node_list = client.node.list_nodes(ex_location=datacenterid, ex_name=name, ex_network=networkid,
                                        ex_network_domain=networkdomainid, ex_vlan=vlanid,
                                        ex_image=sourceimageid, ex_deployed=deployed, ex_started=started,
                                        ex_state=state, ex_ipv6=ipv6, ex_ipv4=privateipv4)
+    response = DiDataCLIFilterableResponse()
     for node in node_list:
         if idsonly:
             click.secho(node.id)
         else:
-            _print_node_info(node)
+            response.add(_node_to_dict(node))
+    if not response.is_empty():
+        if query is not None:
+            response.do_filter(query)
+        click.secho(response.to_string(client.output_type))
+    else:
+        click.secho("No nodes found", fg='red', bold=True)
 
 
 @cli.command()
