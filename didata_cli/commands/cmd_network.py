@@ -15,60 +15,6 @@ def cli(client):
     pass
 
 
-def _vlan_to_dict(vlan):
-    vlan_dict = OrderedDict()
-    vlan_dict['Name'] = vlan.name
-    vlan_dict['ID'] = vlan.id
-    vlan_dict['Description'] = vlan.description
-    vlan_dict['Network Domain ID'] = vlan.network_domain.id
-    vlan_dict['Status'] = vlan.status
-    vlan_dict['IPv4 Range Address'] = vlan.private_ipv4_range_address
-    vlan_dict['IPv4 Range Size'] = vlan.private_ipv4_range_size
-    vlan_dict['IPv6 Range Address'] = vlan.ipv6_range_address
-    vlan_dict['IPv6 Range Size'] = vlan.ipv6_range_size
-    return vlan_dict
-
-
-def _network_domain_to_dict(network_domain):
-    network_domain_dict = OrderedDict()
-    network_domain_dict['Name'] = network_domain.name
-    network_domain_dict['ID'] = network_domain.id
-    network_domain_dict['Description'] = network_domain.description
-    network_domain_dict['Location'] = network_domain.location.id
-    network_domain_dict['Status'] = network_domain.status
-    network_domain_dict['Plan'] = network_domain.plan
-    return network_domain_dict
-
-
-def _firewall_rule_to_dict(firewall_rule):
-    print("here")
-    source_location = ParseNetworkLocation(firewall_rule.source)
-    dest_location = ParseNetworkLocation(firewall_rule.destination)
-    firewall_rule_dict = OrderedDict()
-    firewall_rule_dict['Name'] = firewall_rule.name
-    firewall_rule_dict['ID'] = firewall_rule.id
-    firewall_rule_dict['Protocol'] = firewall_rule.protocol
-    firewall_rule_dict['IP Version'] = firewall_rule.ip_version
-    firewall_rule_dict['Source IP'] = source_location.ip
-    firewall_rule_dict['Source Ports'] = source_location.ports
-    firewall_rule_dict['Destination IP'] = dest_location.ip
-    firewall_rule_dict['Destination Ports'] = dest_location.ports
-    firewall_rule_dict['Action'] = firewall_rule.action
-    firewall_rule_dict['Status'] = firewall_rule.status
-    firewall_rule_dict['Enabled'] = firewall_rule.enabled
-    firewall_rule_dict['Location'] = firewall_rule.location.id
-    return firewall_rule_dict
-
-
-def _ip_block_to_dict(ip_block):
-    ip_block_dict = OrderedDict()
-    ip_block_dict['ID'] = ip_block.id
-    ip_block_dict['Base IP'] = ip_block.base_ip
-    ip_block_dict['Block Size'] = ip_block.size
-    ip_block_dict['Status'] = ip_block.status
-    return ip_block_dict
-
-
 @cli.command()
 @click.option('--datacenterId', type=click.UNPROCESSED, help="Filter by datacenter Id")
 @click.option('--networkDomainId', type=click.UNPROCESSED, help="Filter by network domain")
@@ -337,6 +283,60 @@ def delete_public_ip_block(client, ipblockid):
         click.secho("Public IP block with id {0} deleted.".format(ipblockid), fg='green', bold=True)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)
+
+
+def _vlan_to_dict(vlan):
+    vlan_dict = OrderedDict()
+    vlan_dict['Name'] = vlan.name
+    vlan_dict['ID'] = vlan.id
+    vlan_dict['Description'] = vlan.description
+    vlan_dict['Network Domain ID'] = vlan.network_domain.id
+    vlan_dict['Status'] = vlan.status
+    vlan_dict['IPv4 Range Address'] = vlan.private_ipv4_range_address
+    vlan_dict['IPv4 Range Size'] = vlan.private_ipv4_range_size
+    vlan_dict['IPv6 Range Address'] = vlan.ipv6_range_address
+    vlan_dict['IPv6 Range Size'] = vlan.ipv6_range_size
+    return vlan_dict
+
+
+def _network_domain_to_dict(network_domain):
+    network_domain_dict = OrderedDict()
+    network_domain_dict['Name'] = network_domain.name
+    network_domain_dict['ID'] = network_domain.id
+    network_domain_dict['Description'] = network_domain.description
+    network_domain_dict['Location'] = network_domain.location.id
+    network_domain_dict['Status'] = network_domain.status
+    network_domain_dict['Plan'] = network_domain.plan
+    return network_domain_dict
+
+
+def _firewall_rule_to_dict(firewall_rule):
+    print("here")
+    source_location = ParseNetworkLocation(firewall_rule.source)
+    dest_location = ParseNetworkLocation(firewall_rule.destination)
+    firewall_rule_dict = OrderedDict()
+    firewall_rule_dict['Name'] = firewall_rule.name
+    firewall_rule_dict['ID'] = firewall_rule.id
+    firewall_rule_dict['Protocol'] = firewall_rule.protocol
+    firewall_rule_dict['IP Version'] = firewall_rule.ip_version
+    firewall_rule_dict['Source IP'] = source_location.ip
+    firewall_rule_dict['Source Ports'] = source_location.ports
+    firewall_rule_dict['Destination IP'] = dest_location.ip
+    firewall_rule_dict['Destination Ports'] = dest_location.ports
+    firewall_rule_dict['Action'] = firewall_rule.action
+    firewall_rule_dict['Status'] = firewall_rule.status
+    firewall_rule_dict['Enabled'] = firewall_rule.enabled
+    firewall_rule_dict['Location'] = firewall_rule.location.id
+    return firewall_rule_dict
+
+
+def _ip_block_to_dict(ip_block):
+    ip_block_dict = OrderedDict()
+    ip_block_dict['ID'] = ip_block.id
+    ip_block_dict['Base IP'] = ip_block.base_ip
+    ip_block_dict['Block Size'] = ip_block.size
+    ip_block_dict['Status'] = ip_block.status
+    return ip_block_dict
 
 
 class ParseNetworkLocation(object):

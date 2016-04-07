@@ -74,7 +74,9 @@ class DiDataCLIFilterableResponse(object):
             for key in item:
                 output.write("{0}: {1}\n".format(key, item[key]))
             output.write("\n")
-        return output.getvalue()
+        final_string = output.getvalue()
+        # Remove the last two return carriages before returning
+        return final_string[:-2]
 
     def _to_tabulate(self, name, headers):
         if headers is True:
