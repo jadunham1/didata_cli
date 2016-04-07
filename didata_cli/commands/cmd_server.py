@@ -14,7 +14,7 @@ def cli(client):
 
 @cli.command()
 @click.option('--serverId', required=True, help="The server ID to get info for")
-@click.option('--query', help="The query to pass to the printer")
+@click.option('--query', help="The query to pass to the filterable response")
 @pass_client
 def info(client, serverid, query):
     node = client.node.ex_get_node_by_id(serverid)
@@ -41,7 +41,7 @@ def info(client, serverid, query):
 @click.option('--ipv6', help="Filter by ipv6")
 @click.option('--privateIpv4', help="Filter by private ipv4")
 @click.option('--idsonly', is_flag=True, default=False, help="Only dump server ids")
-@click.option('--query', help="The query to pass to the printer")
+@click.option('--query', help="The query to pass to the filterable response")
 @pass_client
 def list(client, datacenterid, networkdomainid, networkid,
          vlanid, sourceimageid, deployed, name,

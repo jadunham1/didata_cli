@@ -311,7 +311,6 @@ def _network_domain_to_dict(network_domain):
 
 
 def _firewall_rule_to_dict(firewall_rule):
-    print("here")
     source_location = ParseNetworkLocation(firewall_rule.source)
     dest_location = ParseNetworkLocation(firewall_rule.destination)
     firewall_rule_dict = OrderedDict()

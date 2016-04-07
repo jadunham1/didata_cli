@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import json
 from tabulate import tabulate
-import StringIO
 
 VALID_PRINT_TYPES = ('pretty', 'json', 'plain', 'simple', 'grid', 'fancy_grid', 'pipe',
                      'orgtbl', 'rst', 'mediawiki', 'html', 'latex', 'latex_booktabs')
@@ -69,14 +68,12 @@ class DiDataCLIFilterableResponse(object):
         return json.dumps(self._list, indent=4, separators=(',', ': '))
 
     def _to_pretty_string(self, headers):
-        output = StringIO.StringIO()
+        output = ""
         for item in self._list:
             for key in item:
-                output.write("{0}: {1}\n".format(key, item[key]))
-            output.write("\n")
-        final_string = output.getvalue()
-        # Remove the last two return carriages before returning
-        return final_string[:-2]
+                output = output + "{0}: {1}\n".format(key, item[key])
+            output = output + "\n"
+        return output[:-2]
 
     def _to_tabulate(self, name, headers):
         if headers is True:

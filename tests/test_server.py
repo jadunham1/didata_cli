@@ -17,6 +17,7 @@ class DimensionDataCLITestCase(unittest.TestCase):
         self.runner = CliRunner()
         os.environ["DIDATA_USER"] = 'fakeuser'
         os.environ["DIDATA_PASSWORD"] = 'fakepass'
+        os.environ["DIDATA_OUTPUTTYPE"] = 'pretty'
 
     def test_server_help(self, node_client):
         result = self.runner.invoke(cli, ['server'], catch_exceptions=False)
@@ -25,6 +26,8 @@ class DimensionDataCLITestCase(unittest.TestCase):
     def test_server_list(self, node_client):
         node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')
         result = self.runner.invoke(cli, ['server', 'list'])
+        print(result)
+        print(result.output)
         self.assertTrue('Private IPv4: 172.16.2.8', result.output)
         self.assertEqual(result.exit_code, 0)
 
