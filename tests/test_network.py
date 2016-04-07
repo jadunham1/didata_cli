@@ -205,7 +205,7 @@ class DimensionDataCLITestCase(unittest.TestCase):
         self.assertTrue(result.exit_code == 1)
 
     def test_list_firewall_rule(self, node_client):
-        #node_client.return_value.ex_get_network_domain.return_value = load_dd_obj('network_domain.json')
+        node_client.return_value.ex_get_network_domain.return_value = load_dd_obj('network_domain.json')
         node_client.return_value.ex_list_firewall_rules.return_value = load_dd_obj('firewall_rule_list.json')
         result = self.runner.invoke(cli, ['network', 'list_firewall_rules', '--networkDomainId', 'fake_network_domain'])
         print(result.output)
