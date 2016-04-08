@@ -26,8 +26,6 @@ class DimensionDataCLITestCase(unittest.TestCase):
     def test_server_list(self, node_client):
         node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')
         result = self.runner.invoke(cli, ['server', 'list'])
-        print(result)
-        print(result.output)
         self.assertTrue('Private IPv4: 172.16.2.8', result.output)
         self.assertEqual(result.exit_code, 0)
 
@@ -39,7 +37,7 @@ class DimensionDataCLITestCase(unittest.TestCase):
 
     def test_server_list_query(self, node_client):
         node_client.return_value.list_nodes.return_value = load_dd_obj('node_list.json')
-        result = self.runner.invoke(cli, ['server', 'list', '--query', 'ReturnCount:1|ReturnKeys:ID'])
+        result = self.runner.invoke(cli, ['server', 'list', '--query', "ReturnCount:1|ReturnKeys:ID"])
         self.assertEqual(result.exit_code, 0)
         output = os.linesep.join([s for s in result.output.splitlines() if s])
         self.assertEqual(output, 'ID: b4ea8995-43a1-4b56-b751-4107b5671713')

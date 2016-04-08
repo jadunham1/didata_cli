@@ -6,7 +6,10 @@ from libcloud.common.dimensiondata import DimensionDataFirewallRule
 from libcloud.common.dimensiondata import DimensionDataFirewallAddress
 from didata_cli.filterable_response import DiDataCLIFilterableResponse
 from didata_cli.utils import handle_dd_api_exception
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 @click.group()

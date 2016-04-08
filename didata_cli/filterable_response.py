@@ -1,6 +1,9 @@
-from collections import OrderedDict
 import json
 from tabulate import tabulate
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 VALID_PRINT_TYPES = ('pretty', 'json', 'plain', 'simple', 'grid', 'fancy_grid', 'pipe',
                      'orgtbl', 'rst', 'mediawiki', 'html', 'latex', 'latex_booktabs')
@@ -54,9 +57,13 @@ class DiDataCLIFilterableResponse(object):
                 pass
             else:
                 for item in self._list:
+                    # This is hacky for python 3.5
+                    keys_to_delete = []
                     for key in item:
                         if key not in cli_filter.return_keys:
-                            del item[key]
+                            keys_to_delete.append(key)
+                    for key in keys_to_delete:
+                        del item[key]
 
     def to_string(self, print_type, headers=True):
         if not self.is_valid_print_type(print_type):

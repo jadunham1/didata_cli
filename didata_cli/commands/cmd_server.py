@@ -3,7 +3,10 @@ from didata_cli.cli import pass_client
 from didata_cli.filterable_response import DiDataCLIFilterableResponse
 from libcloud.common.dimensiondata import DimensionDataAPIException
 from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 @click.group()
@@ -41,7 +44,7 @@ def info(client, serverid, query):
 @click.option('--ipv6', help="Filter by ipv6")
 @click.option('--privateIpv4', help="Filter by private ipv4")
 @click.option('--idsonly', is_flag=True, default=False, help="Only dump server ids")
-@click.option('--query', help="The query to pass to the filterable response")
+@click.option('--query', type=click.UNPROCESSED, help="The query to pass to the filterable response")
 @pass_client
 def list(client, datacenterid, networkdomainid, networkid,
          vlanid, sourceimageid, deployed, name,
