@@ -151,7 +151,7 @@ def modify_disk(client, serverid, serverfilteripv6, diskid, size, speed):
                         fg='green', bold=True)
         else:
             click.secho("Something went wrong attempting to modify disk {0} from {1}".format(disk_to_modify.id,
-                                                                                            serverid),
+                                                                                             serverid),
                         fg='red', bold=True)
             exit(1)
     except DimensionDataAPIException as e:
