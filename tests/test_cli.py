@@ -350,3 +350,85 @@ class DimensionDataCLITestCase(unittest.TestCase):
                                      '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
         self.assertTrue('REASON 533' in result.output)
         self.assertTrue(result.exit_code == 1)
+
+    def test_server_add_disk(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_add_storage_to_node.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'add_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--size', '50', '--speed', 'ECONOMY'])
+        self.assertTrue('Adding disk' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_add_disk_filters(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_add_storage_to_node.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'add_disk', '--size', '50', '--speed', 'ECONOMY',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('Adding disk' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_add_disk_return_False(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_add_storage_to_node.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'add_disk', '--size', '50', '--speed', 'ECONOMY',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('Something went wrong attempting to add disk' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_add_disk_APIException(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_add_storage_to_node.side_effect = DimensionDataAPIException(
+            code='REASON 534', msg='Cannot add disk to server', driver=None)
+        result = self.runner.invoke(cli,
+                                    ['server', 'add_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--size', '50', '--speed', 'ECONOMY'])
+        self.assertTrue('REASON 534' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_remove_disk(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_remove_storage_from_node.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'remove_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--diskId', '0'])
+        self.assertTrue('Removed disk' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_remove_disk_filters(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_remove_storage_from_node.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'remove_disk', '--diskId', '0',
+                                     '--serverFilterIpv6', '::1'])
+        print(result.output)
+        self.assertTrue('Removed disk' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_remove_disk_return_False(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_remove_storage_from_node.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'remove_disk', '--diskId', '0',
+                                     '--serverFilterIpv6', '::1'])
+        print(result.output)
+        self.assertTrue('Something went wrong attempting to remove disk' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_remove_disk_APIException(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_remove_storage_from_node.side_effect = DimensionDataAPIException(
+            code='REASON 535', msg='Cannot remove disk from server', driver=None)
+        result = self.runner.invoke(cli,
+                                    ['server', 'remove_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--diskId', '0'])
+        self.assertTrue('REASON 535' in result.output)
+        self.assertTrue(result.exit_code == 1)
