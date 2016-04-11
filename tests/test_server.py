@@ -428,7 +428,6 @@ class DimensionDataCLITestCase(unittest.TestCase):
         result = self.runner.invoke(cli,
                                     ['server', 'remove_disk', '--diskId', '0',
                                      '--serverFilterIpv6', '::1'])
-        print(result.output)
         self.assertTrue('Removed disk' in result.output)
         self.assertTrue(result.exit_code == 0)
 
@@ -439,7 +438,6 @@ class DimensionDataCLITestCase(unittest.TestCase):
         result = self.runner.invoke(cli,
                                     ['server', 'remove_disk', '--diskId', '0',
                                      '--serverFilterIpv6', '::1'])
-        print(result.output)
         self.assertTrue('Something went wrong attempting to remove disk' in result.output)
         self.assertTrue(result.exit_code == 1)
 
