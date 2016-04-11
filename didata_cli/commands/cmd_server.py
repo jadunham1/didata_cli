@@ -1,7 +1,12 @@
 import click
 from didata_cli.cli import pass_client
+from didata_cli.filterable_response import DiDataCLIFilterableResponse
 from libcloud.common.dimensiondata import DimensionDataAPIException
 from didata_cli.utils import handle_dd_api_exception, get_single_server_id_from_filters
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 @click.group()
@@ -10,40 +15,20 @@ def cli(client):
     pass
 
 
-def _print_node_info(node):
-    click.secho("Name: {0}".format(node.name), bold=True)
-    click.secho("ID: {0}".format(node.id))
-    click.secho("Private IPv4: {0}".format(" - ".join(node.private_ips)))
-    if 'ipv6' in node.extra:
-        click.secho("Private IPv6: {0}".format(node.extra['ipv6']))
-    click.secho("Public IPs: {0}".format(" - ".join(node.public_ips)))
-    click.secho("State: {0}".format(node.state))
-    for key in sorted(node.extra):
-        if key == 'cpu':
-            click.echo("CPU Count: {0}".format(node.extra[key].cpu_count))
-            click.echo("Cores per Socket: {0}".format(node.extra[key].cores_per_socket))
-            click.echo("CPU Performance: {0}".format(node.extra[key].performance))
-            continue
-        if key == 'disks':
-            for disk in node.extra[key]:
-                click.secho("Disk {0}:".format(disk.scsi_id))
-                click.secho("  Size: {0}GB".format(disk.size_gb))
-                click.secho("  Speed: {0}".format(disk.speed))
-                click.secho("  State: {0}".format(disk.state))
-            continue
-        # skip this key, it is similar to node.status
-        if key == 'status':
-            continue
-        click.echo("{0}: {1}".format(key, node.extra[key]))
-    click.secho("")
-
-
 @cli.command()
 @click.option('--serverId', required=True, help="The server ID to get info for")
+@click.option('--query', help="The query to pass to the filterable response")
 @pass_client
-def info(client, serverid):
+def info(client, serverid, query):
     node = client.node.ex_get_node_by_id(serverid)
-    _print_node_info(node)
+    if node:
+        response = DiDataCLIFilterableResponse()
+        response.add(_node_to_dict(node))
+        if query is not None:
+            response.do_filter(query)
+        click.secho(response.to_string(client.output_type))
+    else:
+        click.secho("No node found for id {0}".format(serverid), fg='red', bold=True)
 
 
 @cli.command()
@@ -59,19 +44,27 @@ def info(client, serverid):
 @click.option('--ipv6', help="Filter by ipv6")
 @click.option('--privateIpv4', help="Filter by private ipv4")
 @click.option('--idsonly', is_flag=True, default=False, help="Only dump server ids")
+@click.option('--query', type=click.UNPROCESSED, help="The query to pass to the filterable response")
 @pass_client
 def list(client, datacenterid, networkdomainid, networkid,
          vlanid, sourceimageid, deployed, name,
-         state, started, ipv6, privateipv4, idsonly):
+         state, started, ipv6, privateipv4, idsonly, query):
     node_list = client.node.list_nodes(ex_location=datacenterid, ex_name=name, ex_network=networkid,
                                        ex_network_domain=networkdomainid, ex_vlan=vlanid,
                                        ex_image=sourceimageid, ex_deployed=deployed, ex_started=started,
                                        ex_state=state, ex_ipv6=ipv6, ex_ipv4=privateipv4)
+    response = DiDataCLIFilterableResponse()
     for node in node_list:
         if idsonly:
             click.secho(node.id)
         else:
-            _print_node_info(node)
+            response.add(_node_to_dict(node))
+    if not response.is_empty():
+        if query is not None:
+            response.do_filter(query)
+        click.secho(response.to_string(client.output_type))
+    else:
+        click.secho("No nodes found", fg='red', bold=True)
 
 
 @cli.command()
@@ -157,7 +150,7 @@ def modify_disk(client, serverid, serverfilteripv6, diskid, size, speed):
             click.secho("Successfully modified disk {0} from {1}".format(disk_to_modify.scsi_id, serverid),
                         fg='green', bold=True)
         else:
-            click.secho("Something went wrong attemping to modify disk {0} from {1}".format(disk_to_modify.id,
+            click.secho("Something went wrong attempting to modify disk {0} from {1}".format(disk_to_modify.id,
                                                                                             serverid),
                         fg='red', bold=True)
             exit(1)
@@ -349,3 +342,31 @@ def _find_disk_id_from_node(node, diskid):
         click.secho("No disk with id {0} in server {1}".format(diskid, node.id), fg='red', bold=True)
         exit(1)
     return found_disk
+
+
+def _node_to_dict(node):
+    node_dict = OrderedDict()
+    node_dict['Name'] = node.name
+    node_dict['ID'] = node.id
+    ip_count = 0
+    for ip in node.private_ips:
+        node_dict['Private IPv4 ' + str(ip_count)] = ip
+    node_dict['State'] = node.state
+    for key in sorted(node.extra):
+        if key == 'cpu':
+            node_dict['CPU Count'] = node.extra[key].cpu_count
+            node_dict['Cores per Socket'] = node.extra[key].cores_per_socket
+            node_dict['CPU Performance'] = node.extra[key].performance
+            continue
+        if key == 'disks':
+            for disk in node.extra[key]:
+                node_dict['Disk ' + str(disk.scsi_id) + ' ID'] = disk.id
+                node_dict['Disk ' + str(disk.scsi_id) + ' Size'] = disk.size_gb
+                node_dict['Disk ' + str(disk.scsi_id) + ' Speed'] = disk.speed
+                node_dict['Disk ' + str(disk.scsi_id) + ' State'] = disk.state
+            continue
+        # skip this key, it is similar to node.status
+        if key == 'status':
+            continue
+        node_dict[key] = node.extra[key]
+    return node_dict
