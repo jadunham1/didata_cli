@@ -368,5 +368,7 @@ def _node_to_dict(node):
         # skip this key, it is similar to node.status
         if key == 'status':
             continue
+        if key == 'vmWareTools':
+            continue
         node_dict[key] = node.extra[key]
     return node_dict

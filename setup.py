@@ -18,7 +18,8 @@ from setuptools import setup, find_packages
 
 wargs = {}
 requires = ['click',
-            'apache-libcloud>=1.0.0-pre1']
+            'apache-libcloud>=1.0.0-pre1',
+            'tabulate']
 
 # python 2.7 hackery
 if sys.version_info <= (3, 0):
@@ -33,7 +34,7 @@ setup(
     license='Apache License (2.0)',
     url="https://www.dimensiondata.com/",
     name="didata_cli",
-    version="0.2.0",
+    version="0.2.3",
     packages=find_packages(exclude=["contrib", "docs", "tests*", "tasks", "venv"]),
     install_requires=requires,
     setup_requires=[],
