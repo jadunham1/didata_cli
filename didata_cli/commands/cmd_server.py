@@ -55,14 +55,14 @@ def list(client, datacenterid, networkdomainid, networkid,
                                        ex_state=state, ex_ipv6=ipv6, ex_ipv4=privateipv4)
     response = DiDataCLIFilterableResponse()
     for node in node_list:
-        if idsonly:
-            click.secho(node.id)
-        else:
-            response.add(_node_to_dict(node))
+        response.add(_node_to_dict(node))
     if not response.is_empty():
         if query is not None:
             response.do_filter(query)
-        click.secho(response.to_string(client.output_type))
+        if idsonly:
+            click.secho(response.to_string('idsonly'))
+        else:
+            click.secho(response.to_string(client.output_type))
     else:
         click.secho("No nodes found", fg='red', bold=True)
 

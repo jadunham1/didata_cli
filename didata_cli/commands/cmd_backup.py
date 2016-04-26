@@ -102,7 +102,11 @@ def remove_client(client, serverid, clienttype, serverfilteripv6):
     if not serverid:
         serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
     try:
-        details = client.backup.ex_get_backup_details_for_target(serverid)
+        target = client.backup.ex_get_target_by_id(serverid)
+        if target is None:
+            click.secho("Backup is not configured for {0}".format(serverid), fg='red', bold=True)
+            exit(1)
+        details = client.backup.ex_get_backup_details_for_target(target)
         if len(details.clients) <= 0:
             click.secho("No clients found for {0}".format(serverid), fg='red', bold=True)
             exit(1)
