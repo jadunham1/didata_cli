@@ -114,7 +114,6 @@ This command will add a new disk to a particular server::
 
     didata server add_disk --serverId <SERVER_ID> --size 50 --speed STANDARD
 
-
 remove_disk
 -----------
 
@@ -132,3 +131,24 @@ This command will modify a disk in slot 2 to be 60Gb::
 This command will modify a disk in slot 2 to be HIGH PERFORMANCE::
 
     didata server modify_disk --serverId <SERVER_ID> --diskId 2 --speed HIGHPERFORMANCE
+
+enable_monitoring
+-----------------
+
+This command will enable monitoring on particular server::
+
+    didata server enable_monitoring --serverId <SERVER_ID>
+
+disable_monitoring
+------------------
+
+This command will disable monitoring on particular server::
+
+    didata server disable_monitoring --serverId <SERVER_ID>
+
+update_monitoring
+-----------------
+
+This command will update monitoring on particular server::
+
+    didata server update_monitoring --serverId <SERVER_ID> --servicePlan <SERVICE_PLAN>
