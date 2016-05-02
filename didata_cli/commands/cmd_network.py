@@ -192,9 +192,9 @@ def create_firewall_rule(client, name, action, networkdomainid, ipversion, proto
         source_any = True if sourceip == 'ANY' else False
         dest_any = True if destinationip == 'ANY' else False
         source_address = DimensionDataFirewallAddress(source_any, sourceip, sourceip_prefix_size, sourcestartport,
-                                                      sourceendport)
+                                                      sourceendport, None, None)
         dest_address = DimensionDataFirewallAddress(dest_any, destinationip, destinationip_prefix_size,
-                                                    destinationstartport, destinationendport)
+                                                    destinationstartport, destinationendport, None, None)
         rule = DimensionDataFirewallRule(id=None, name=name, action=action, location=network_domain.location,
                                          network_domain=network_domain, status=None, ip_version=ipversion,
                                          protocol=protocol, source=source_address, destination=dest_address,

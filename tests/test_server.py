@@ -88,6 +88,23 @@ class DimensionDataCLITestCase(unittest.TestCase):
         self.assertTrue('ID: 8aeff10c-c918-4021-b2ce-93e4a209418b' in result.output)
         self.assertTrue(result.exit_code == 0)
 
+    def test_server_info_with_query(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        result = self.runner.invoke(cli, ['server', 'info',
+                                          '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                          '--query', "ReturnCount:1|ReturnKeys:ID"])
+        self.assertEqual(result.exit_code, 0)
+        output = os.linesep.join([s for s in result.output.splitlines() if s])
+        self.assertEqual(output, 'ID: 8aeff10c-c918-4021-b2ce-93e4a209418b')
+
+    def test_server_info_no_node(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = None
+        result = self.runner.invoke(cli,
+                                    ['server', 'info',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('No node found' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
     def test_server_update_ram(self, node_client):
         node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
         node_client.return_value.ex_reconfigure_node.return_value = True
@@ -472,6 +489,24 @@ class DimensionDataCLITestCase(unittest.TestCase):
         self.assertTrue('Successfully modified disk' in result.output)
         self.assertTrue(result.exit_code == 0)
 
+    def test_server_modify_disk_speed_and_size_fail(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_change_storage_speed.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'modify_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--diskId', '0', '--speed', 'ECONOMY', '--size', 50])
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_modify_disk__no_speed_and_size_fail(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_change_storage_speed.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'modify_disk',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
+                                     '--diskId', '0'])
+        self.assertTrue(result.exit_code == 1)
+
     def test_server_modify_disk_filters(self, node_client):
         node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
         node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
@@ -492,6 +527,16 @@ class DimensionDataCLITestCase(unittest.TestCase):
         self.assertTrue('Something went wrong attempting to modify disk' in result.output)
         self.assertTrue(result.exit_code == 1)
 
+    def test_server_modify_disk_no_disk_fail(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_change_storage_size.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'modify_disk', '--diskId', '5', '--size', 50,
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('No disk with id 5' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
     def test_server_modify_disk_APIException(self, node_client):
         node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
         node_client.return_value.ex_change_storage_size.side_effect = DimensionDataAPIException(
@@ -501,4 +546,121 @@ class DimensionDataCLITestCase(unittest.TestCase):
                                      '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b',
                                      '--diskId', '0', '--size', 50])
         self.assertTrue('REASON 536' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_enable_monitoring(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_enable_monitoring.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'enable_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('enabled for monitoring' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_enable_monitoring_filters(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_enable_monitoring.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'enable_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('enabled for monitoring' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_enable_monitoring_return_False(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_enable_monitoring.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'enable_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('Something went wrong when attempting to enable monitoring' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_enable_monitoring_APIException(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_enable_monitoring.side_effect = DimensionDataAPIException(
+            code='REASON 537', msg='Cannot enable monitoring', driver=None)
+        result = self.runner.invoke(cli,
+                                    ['server', 'enable_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('REASON 537' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_update_monitoring(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_update_monitoring_plan.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'update_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('monitoring updated' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_update_monitoring_filters(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_update_monitoring_plan.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'update_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('monitoring updated' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_update_monitoring_return_False(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_update_monitoring_plan.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'update_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('Something went wrong when attempting to update monitoring' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_update_monitoring_APIException(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_update_monitoring_plan.side_effect = DimensionDataAPIException(
+            code='REASON 538', msg='Cannot update monitoring', driver=None)
+        result = self.runner.invoke(cli,
+                                    ['server', 'update_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('REASON 538' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_disable_monitoring(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_disable_monitoring.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'disable_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('monitoring disabled' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_disable_monitoring_filters(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_disable_monitoring.return_value = True
+        result = self.runner.invoke(cli,
+                                    ['server', 'disable_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('monitoring disabled' in result.output)
+        self.assertTrue(result.exit_code == 0)
+
+    def test_server_disable_monitoring_return_False(self, node_client):
+        node_client.return_value.list_nodes.return_value = load_dd_obj('single_node_list.json')
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_disable_monitoring.return_value = False
+        result = self.runner.invoke(cli,
+                                    ['server', 'disable_monitoring',
+                                     '--serverFilterIpv6', '::1'])
+        self.assertTrue('Something went wrong when attempting to disable monitoring' in result.output)
+        self.assertTrue(result.exit_code == 1)
+
+    def test_server_disable_monitoring_APIException(self, node_client):
+        node_client.return_value.ex_get_node_by_id.return_value = load_dd_obj('node.json')
+        node_client.return_value.ex_disable_monitoring.side_effect = DimensionDataAPIException(
+            code='REASON 539', msg='Cannot disable monitoring', driver=None)
+        result = self.runner.invoke(cli,
+                                    ['server', 'disable_monitoring',
+                                     '--serverId', '8aeff10c-c918-4021-b2ce-93e4a209418b'])
+        self.assertTrue('REASON 539' in result.output)
         self.assertTrue(result.exit_code == 1)

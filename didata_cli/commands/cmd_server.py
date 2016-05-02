@@ -55,14 +55,14 @@ def list(client, datacenterid, networkdomainid, networkid,
                                        ex_state=state, ex_ipv6=ipv6, ex_ipv4=privateipv4)
     response = DiDataCLIFilterableResponse()
     for node in node_list:
-        if idsonly:
-            click.secho(node.id)
-        else:
-            response.add(_node_to_dict(node))
+        response.add(_node_to_dict(node))
     if not response.is_empty():
         if query is not None:
             response.do_filter(query)
-        click.secho(response.to_string(client.output_type))
+        if idsonly:
+            click.secho(response.to_string('idsonly'))
+        else:
+            click.secho(response.to_string(client.output_type))
     else:
         click.secho("No nodes found", fg='red', bold=True)
 
@@ -327,6 +327,68 @@ def shutdown_hard(client, serverid, serverfilteripv6):
             click.secho("Server {0} is shutting down hard".format(serverid), fg='green', bold=True)
         else:
             click.secho("Something went wrong when attempting to shutdown {0}".format(serverid))
+            exit(1)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to shutdown')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
+@click.option('--servicePlan', default='ESSENTIALS', type=click.Choice(['ESSENTIALS', 'ADVANCED']))
+@pass_client
+def enable_monitoring(client, serverid, serverfilteripv6, serviceplan):
+    node = None
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    node = client.node.ex_get_node_by_id(serverid)
+    try:
+        response = client.node.ex_enable_monitoring(node, serviceplan)
+        if response is True:
+            click.secho("Server {0} enabled for monitoring".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Something went wrong when attempting to enable monitoring on {0}".format(serverid))
+            exit(1)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to shutdown')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
+@click.option('--servicePlan', default='ESSENTIALS', type=click.Choice(['ESSENTIALS', 'ADVANCED']))
+@pass_client
+def update_monitoring(client, serverid, serverfilteripv6, serviceplan):
+    node = None
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    node = client.node.ex_get_node_by_id(serverid)
+    try:
+        response = client.node.ex_update_monitoring_plan(node, serviceplan)
+        if response is True:
+            click.secho("Server {0} monitoring updated".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Something went wrong when attempting to update monitoring on {0}".format(serverid))
+            exit(1)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', type=click.UNPROCESSED, help='The server ID to shutdown')
+@click.option('--serverFilterIpv6', help='The filter for ipv6')
+@pass_client
+def disable_monitoring(client, serverid, serverfilteripv6):
+    node = None
+    if not serverid:
+        serverid = get_single_server_id_from_filters(client, ex_ipv6=serverfilteripv6)
+    node = client.node.ex_get_node_by_id(serverid)
+    try:
+        response = client.node.ex_disable_monitoring(node)
+        if response is True:
+            click.secho("Server {0} monitoring disabled".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Something went wrong when attempting to disable monitoring on {0}".format(serverid))
             exit(1)
     except DimensionDataAPIException as e:
         handle_dd_api_exception(e)

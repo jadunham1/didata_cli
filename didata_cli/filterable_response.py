@@ -5,7 +5,7 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-VALID_PRINT_TYPES = ('pretty', 'json', 'plain', 'simple', 'grid', 'fancy_grid', 'pipe',
+VALID_PRINT_TYPES = ('pretty', 'idsonly', 'json', 'plain', 'simple', 'grid', 'fancy_grid', 'pipe',
                      'orgtbl', 'rst', 'mediawiki', 'html', 'latex', 'latex_booktabs')
 
 
@@ -80,6 +80,14 @@ class DiDataCLIFilterableResponse(object):
             for key in item:
                 output = output + "{0}: {1}\n".format(key, item[key])
             output = output + "\n"
+        return output[:-2]
+
+    def _to_idsonly_string(self, headers):
+        output = ''
+        for item in self._list:
+            if 'ID' not in item:
+                raise KeyError("ID not in item, there are no IDs to print")
+            output = output + item['ID'] + "\n"
         return output[:-2]
 
     def _to_tabulate(self, name, headers):
