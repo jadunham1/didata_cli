@@ -394,6 +394,39 @@ def disable_monitoring(client, serverid, serverfilteripv6):
         handle_dd_api_exception(e)
 
 
+@cli.command()
+@click.option('--serverId', help="The server ID to tag", required=True)
+@click.option('--tagKeyName', type=click.UNPROCESSED, help="The key name", required=True)
+@click.option('--tagKeyValue', help="The value of the key if needed")
+@pass_client
+def apply_tag(client, serverid, tagkeyname, tagkeyvalue):
+    try:
+        server = client.node.ex_get_node_by_id(serverid)
+        response = client.node.ex_apply_tag_to_asset(server, tagkeyname, tagkeyvalue)
+        if response is True:
+            click.secho("Tag applied to {0}".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Error when applying tag", fg='red', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
+@cli.command()
+@click.option('--serverId', help="The server ID to remove a tag from", required=True)
+@click.option('--tagKeyName', type=click.UNPROCESSED, help="The key name to remove", required=True)
+@pass_client
+def remove_tag(client, serverid, tagkeyname):
+    try:
+        server = client.node.ex_get_node_by_id(serverid)
+        response = client.node.ex_remove_tag_from_asset(server, tagkeyname)
+        if response is True:
+            click.secho("Tag removed from {0}".format(serverid), fg='green', bold=True)
+        else:
+            click.secho("Error when removing tag", fg='red', bold=True)
+    except DimensionDataAPIException as e:
+        handle_dd_api_exception(e)
+
+
 def _find_disk_id_from_node(node, diskid):
     found_disk = None
     for disk in node.extra['disks']:

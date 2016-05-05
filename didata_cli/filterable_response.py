@@ -78,7 +78,7 @@ class DiDataCLIFilterableResponse(object):
         output = ""
         for item in self._list:
             for key in item:
-                output = output + "{0}: {1}\n".format(key, item[key])
+                output = output + "%s: %s\n" % (key, item[key])
             output = output + "\n"
         return output[:-2]
 
